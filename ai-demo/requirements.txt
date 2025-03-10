@@ -1,0 +1,7 @@
+google-generativeai
+flask
+gtts
+speechrecognition
+numpy
+librosa
+vaderSentiment

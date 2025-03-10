@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Interview System | CyberVerse</title>
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,300;0,600;1,300;1,600&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome (corrected path) -->
+    <link rel="stylesheet" href="/static/css/fontawesome-all.min.css" />
+    <!-- Custom CSS based on Dimension template -->
+    <link rel="stylesheet" href="/static/css/dimension-custom.css" />
+    <style>
+      /* Temporary styles for video feed */
+      #videoFeedTech,
+      #videoFeedHR {
+        display: none;
+        margin-top: 1rem;
+        border: 1px solid #ccc;
+      }
+      .video-container {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body class="is-preload">
+    <!-- Background -->
+    <div id="bg"></div>
+
+    <!-- Wrapper -->
+    <div id="wrapper">
+      <!-- Header -->
+      <header id="header">
+        <h1><a href="#">CyberVerse AI Interview</a></h1>
+        <nav>
+          <ul>
+            <li><a href="#home" class="nav-link active">Home</a></li>
+            <li><a href="#tech" class="nav-link">Tech Interview</a></li>
+            <li><a href="#hr" class="nav-link">HR Interview</a></li>
+            <li><a href="#about" class="nav-link">About</a></li>
+          </ul>
+        </nav>
+      </header>
+
+      <!-- Main -->
+      <div id="main">
+        <!-- Home Section -->
+        <article id="home" class="active">
+          <div class="content">
+            <header>
+              <h2>Welcome to CyberVerse AI</h2>
+              <p>Prepare for your future with our advanced interview system.</p>
+            </header>
+            <div class="inner">
+              <div class="box">
+                <p>
+                  The CyberVerse AI Interview System leverages cutting-edge
+                  technology to help you prepare for technical and HR
+                  interviews. Experience a futuristic interface with real-time
+                  feedback, audio responses, and facial emotion analysis.
+                </p>
+                <ul class="actions">
+                  <li>
+                    <a href="#tech" class="button nav-link">
+                      <i class="fas fa-code"></i> Start Tech Interview
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#hr" class="button nav-link">
+                      <i class="fas fa-users"></i> Start HR Interview
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <span class="close"></span>
+        </article>
+
+        <!-- Tech Interview Section -->
+        <article id="tech">
+          <div class="content">
+            <header>
+              <h2>Tech Interview</h2>
+              <p>Test your technical skills with AI-driven questions.</p>
+            </header>
+            <div class="inner">
+              <div class="box">
+                <ul class="actions stacked">
+                  <li>
+                    <button id="startInterviewTech" class="button">
+                      <i class="fas fa-play"></i> Start Tech Interview
+                    </button>
+                  </li>
+                  <li>
+                    <button id="startRecordingTech" class="button">
+                      <i class="fas fa-microphone"></i> Start Recording
+                    </button>
+                  </li>
+                  <li>
+                    <button id="stopRecordingTech" disabled class="button">
+                      <i class="fas fa-stop"></i> Stop Recording
+                    </button>
+                  </li>
+                </ul>
+                <audio id="audioPlayerTech" controls></audio>
+                <p id="questionTextTech"></p>
+                <p id="feedbackTextTech"></p>
+                <div class="video-container">
+                  <video
+                    id="videoFeedTech"
+                    width="320"
+                    height="240"
+                    autoplay
+                  ></video>
+                  <button
+                    id="startCameraTech"
+                    class="button"
+                    style="margin-top: 1rem"
+                  >
+                    <i class="fas fa-video"></i> Start Camera
+                  </button>
+                  <button
+                    id="stopCameraTech"
+                    class="button"
+                    style="margin-top: 1rem; display: none"
+                  >
+                    <i class="fas fa-video-slash"></i> Stop Camera
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <span class="close"></span>
+        </article>
+
+        <!-- HR Interview Section -->
+        <article id="hr">
+          <div class="content">
+            <header>
+              <h2>HR Interview</h2>
+              <p>Prepare for behavioral and situational questions.</p>
+            </header>
+            <div class="inner">
+              <div class="box">
+                <ul class="actions stacked">
+                  <li>
+                    <button id="startInterviewHR" class="button">
+                      <i class="fas fa-play"></i> Start HR Interview
+                    </button>
+                  </li>
+                  <li>
+                    <button id="startRecordingHR" class="button">
+                      <i class="fas fa-microphone"></i> Start Recording
+                    </button>
+                  </li>
+                  <li>
+                    <button id="stopRecordingHR" disabled class="button">
+                      <i class="fas fa-stop"></i> Stop Recording
+                    </button>
+                  </li>
+                </ul>
+                <audio id="audioPlayerHR" controls></audio>
+                <p id="questionTextHR"></p>
+                <p id="feedbackTextHR"></p>
+                <div class="video-container">
+                  <video
+                    id="videoFeedHR"
+                    width="320"
+                    height="240"
+                    autoplay
+                  ></video>
+                  <button
+                    id="startCameraHR"
+                    class="button"
+                    style="margin-top: 1rem"
+                  >
+                    <i class="fas fa-video"></i> Start Camera
+                  </button>
+                  <button
+                    id="stopCameraHR"
+                    class="button"
+                    style="margin-top: 1rem; display: none"
+                  >
+                    <i class="fas fa-video-slash"></i> Stop Camera
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <span class="close"></span>
+        </article>
+
+        <!-- About Section -->
+        <article id="about">
+          <div class="content">
+            <header>
+              <h2>About CyberVerse AI</h2>
+              <p>Learn more about our mission and technology.</p>
+            </header>
+            <div class="inner">
+              <div class="box">
+                <p>
+                  CyberVerse AI is powered by xAI, dedicated to advancing
+                  human-AI collaboration. Our interview system uses
+                  state-of-the-art AI to simulate real-world interviews, helping
+                  candidates improve their skills with audio and facial emotion
+                  analysis.
+                </p>
+                <ul class="icons">
+                  <li>
+                    <a href="#" class="icon brands fa-twitter">
+                      <span class="label">Twitter</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" class="icon brands fa-github">
+                      <span class="label">GitHub</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" class="icon brands fa-linkedin">
+                      <span class="label">LinkedIn</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <span class="close"></span>
+        </article>
+      </div>
+
+      <!-- Footer -->
+      <footer id="footer">
+        <p class="copyright">
+          © 2025 CyberVerse AI. Powered by <a href="https://xai.com">xAI</a>.
+        </p>
+      </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+      // Navigation Interactivity
+      $(document).ready(function () {
+        // Handle navigation link clicks
+        $(".nav-link").on("click", function (e) {
+          e.preventDefault();
+          const target = $(this).attr("href").substring(1); // Get section ID (e.g., "home")
+
+          // Update active article
+          $("#main article").removeClass("active");
+          $(`#${target}`).addClass("active");
+
+          // Update active nav link
+          $("#header nav ul li a").removeClass("active");
+          $(this).addClass("active");
+
+          // Smooth scroll to the top of the active article
+          $("html, body").animate(
+            {
+              scrollTop:
+                $(`#${target}`).offset().top - $("#header").outerHeight(),
+            },
+            500
+          );
+
+          // Update body state for background blur
+          if (target !== "home") {
+            $("body").addClass("is-article-visible");
+          } else {
+            $("body").removeClass("is-article-visible");
+          }
+        });
+
+        // Handle close button
+        $(".close").on("click", function () {
+          $("#main article").removeClass("active");
+          $("body").removeClass("is-article-visible");
+          $("#header nav ul li a").removeClass("active");
+          $('#header nav ul li a[href="#home"]').addClass("active");
+          $("#home").addClass("active");
+          $("html, body").animate(
+            {
+              scrollTop: $("#home").offset().top - $("#header").outerHeight(),
+            },
+            500
+          );
+        });
+
+        // Dimension preload
+        $(".is-preload").removeClass("is-preload");
+      });
+
+      // Interview and Camera Functionality
+      let mediaRecorderTech, mediaRecorderHR;
+      let audioChunksTech = [],
+        audioChunksHR = [];
+      let streamTech, streamHR;
+      let isRecordingTech = false,
+        isRecordingHR = false;
+      let videoStreamTech, videoStreamHR;
+
+      // Tech Interview
+      document
+        .getElementById("startInterviewTech")
+        .addEventListener("click", () => startInterview("tech"));
+      document
+        .getElementById("startRecordingTech")
+        .addEventListener("click", () => startRecording("tech"));
+      document
+        .getElementById("stopRecordingTech")
+        .addEventListener("click", () => stopRecording("tech"));
+      document
+        .getElementById("startCameraTech")
+        .addEventListener("click", () => startCamera("tech"));
+      document
+        .getElementById("stopCameraTech")
+        .addEventListener("click", () => stopCamera("tech"));
+
+      // HR Interview
+      document
+        .getElementById("startInterviewHR")
+        .addEventListener("click", () => startInterview("hr"));
+      document
+        .getElementById("startRecordingHR")
+        .addEventListener("click", () => startRecording("hr"));
+      document
+        .getElementById("stopRecordingHR")
+        .addEventListener("click", () => stopRecording("hr"));
+      document
+        .getElementById("startCameraHR")
+        .addEventListener("click", () => startCamera("hr"));
+      document
+        .getElementById("stopCameraHR")
+        .addEventListener("click", () => stopCamera("hr"));
+
+      async function startInterview(type) {
+        const response = await fetch("/start_interview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: type }),
+        });
+        const data = await response.json();
+        if (data.error) {
+          console.error("Error:", data.error);
+          return;
+        }
+        const suffix = type === "tech" ? "Tech" : "HR";
+        document.getElementById(`questionText${suffix}`).textContent =
+          data.question;
+        document.getElementById(
+          `audioPlayer${suffix}`
+        ).src = `/static/${data.audio}`;
+        document.getElementById(`audioPlayer${suffix}`).play();
+      }
+
+      async function startRecording(type) {
+        const suffix = type === "tech" ? "Tech" : "HR";
+        let mediaRecorder, audioChunks, stream, isRecording;
+
+        if (type === "tech") {
+          if (isRecordingTech) return;
+          isRecordingTech = true;
+          mediaRecorder = mediaRecorderTech;
+          audioChunks = audioChunksTech;
+          stream = streamTech;
+          isRecording = isRecordingTech;
+        } else {
+          if (isRecordingHR) return;
+          isRecordingHR = true;
+          mediaRecorder = mediaRecorderHR;
+          audioChunks = audioChunksHR;
+          stream = streamHR;
+          isRecording = isRecordingHR;
+        }
+
+        document.getElementById(`startRecording${suffix}`).disabled = true;
+        document.getElementById(`stopRecording${suffix}`).disabled = false;
+
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+
+        if (type === "tech") {
+          mediaRecorderTech = mediaRecorder;
+          streamTech = stream;
+        } else {
+          mediaRecorderHR = mediaRecorder;
+          streamHR = stream;
+        }
+
+        mediaRecorder.ondataavailable = (event) => {
+          audioChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+          audioChunks.length = 0;
+
+          const formData = new FormData();
+          formData.append("audio", audioBlob, "response.webm");
+          formData.append("type", type);
+
+          // Capture and send video frame
+          const videoFeed = document.getElementById(`videoFeed${suffix}`);
+          if (videoFeed.srcObject) {
+            const canvas = document.createElement("canvas");
+            canvas.width = videoFeed.videoWidth;
+            canvas.height = videoFeed.videoHeight;
+            const context = canvas.getContext("2d");
+            context.drawImage(videoFeed, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL("image/jpeg").split(",")[1]; // Get base64 data
+            formData.append("image_data", imageData);
+          }
+
+          const response = await fetch("/submit_response", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await response.json();
+
+          if (data.error) {
+            console.error("Error:", data.error);
+          } else {
+            document.getElementById(`questionText${suffix}`).textContent =
+              data.question;
+            document.getElementById(
+              `audioPlayer${suffix}`
+            ).src = `/static/${data.audio}`;
+            document.getElementById(`audioPlayer${suffix}`).play();
+            if (data.feedback) {
+              document.getElementById(`feedbackText${suffix}`).textContent =
+                data.feedback;
+            }
+          }
+
+          if (type === "tech") {
+            isRecordingTech = false;
+            audioChunksTech = [];
+          } else {
+            isRecordingHR = false;
+            audioChunksHR = [];
+          }
+          document.getElementById(`startRecording${suffix}`).disabled = false;
+          document.getElementById(`stopRecording${suffix}`).disabled = true;
+        };
+
+        mediaRecorder.start();
+        console.log(`Recording started for ${type}...`);
+      }
+
+      function stopRecording(type) {
+        const suffix = type === "tech" ? "Tech" : "HR";
+        let mediaRecorder, stream, isRecording;
+
+        if (type === "tech") {
+          if (!isRecordingTech) return;
+          mediaRecorder = mediaRecorderTech;
+          stream = streamTech;
+          isRecording = isRecordingTech;
+        } else {
+          if (!isRecordingHR) return;
+          mediaRecorder = mediaRecorderHR;
+          stream = streamHR;
+          isRecording = isRecordingHR;
+        }
+
+        mediaRecorder.stop();
+        stream.getTracks().forEach((track) => track.stop());
+        console.log(`Recording stopped for ${type}.`);
+      }
+
+      async function startCamera(type) {
+        const suffix = type === "tech" ? "Tech" : "HR";
+        const videoFeed = document.getElementById(`videoFeed${suffix}`);
+        const startButton = document.getElementById(`startCamera${suffix}`);
+        const stopButton = document.getElementById(`stopCamera${suffix}`);
+
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+          videoFeed.srcObject = stream;
+          videoStreamTech = stream; // Store for tech
+          videoStreamHR = stream; // Store for HR (could be separated if needed)
+          videoFeed.style.display = "block";
+          startButton.style.display = "none";
+          stopButton.style.display = "inline-block";
+          logger.info(`Camera started for ${type}`);
+        } catch (error) {
+          console.error("Error accessing camera:", error);
+          alert(
+            "Could not access the camera. Please allow camera permissions."
+          );
+        }
+      }
+
+      function stopCamera(type) {
+        const suffix = type === "tech" ? "Tech" : "HR";
+        const videoFeed = document.getElementById(`videoFeed${suffix}`);
+        const startButton = document.getElementById(`startCamera${suffix}`);
+        const stopButton = document.getElementById(`stopCamera${suffix}`);
+
+        if (videoFeed.srcObject) {
+          videoFeed.srcObject.getTracks().forEach((track) => track.stop());
+          videoFeed.srcObject = null;
+          videoFeed.style.display = "none";
+          startButton.style.display = "inline-block";
+          stopButton.style.display = "none";
+          logger.info(`Camera stopped for ${type}`);
+        }
+      }
+    </script>
+  </body>
+</html>
