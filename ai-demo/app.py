@@ -270,9 +270,7 @@ def submit_response():
                 except Exception as e:
                     logger.error(f"Error processing facial emotions: {e}")
                     emotions = None
-                    dominant_emotion = None
-        
-        if interview_type == "tech":
+                    dominant_emotion = Nones
             next_question = generate_tech_question(response_text)
             audio_file = text_to_speech(next_question)
             if not audio_file:
@@ -309,4 +307,4 @@ def submit_response():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True) 
