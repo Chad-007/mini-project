@@ -12,6 +12,10 @@ from pydub import AudioSegment
 from deepface import DeepFace  # For facial emotion detection
 import cv2  # For capturing video frames
 import base64
+import PyPDF2
+import  docx  # Use python-docx explicitly
+import spacy
+import random
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -40,16 +44,18 @@ def get_available_model():
 
 model = get_available_model()
 
-# Initialize sentiment analyzer
+# Initialize sentiment analyzer and spaCy
 analyzer = SentimentIntensityAnalyzer()
+nlp = spacy.load("en_core_web_sm")
 
-# Store conversation history
+# Store conversation history, current interview type, and extracted skills
 conversation_history = []
+current_interview_type = None
+extracted_skills = []  # Global to store resume skills
 
 # Function to detect facial emotion using DeepFace
 def detect_emotion(frame):
     try:
-        # Analyze the frame for emotions
         result = DeepFace.analyze(frame, actions=['emotion'], enforce_detection=False)
         if result and isinstance(result, list) and len(result) > 0:
             emotions = result[0]['emotion']
@@ -60,52 +66,53 @@ def detect_emotion(frame):
             return None, None
     except Exception as e:
         logger.error(f"Error in emotion detection: {e}")
-        return None, None  # Always return 2 values even on error
+        return None, None
 
 # Function to capture video frame from the frontend
 def capture_frame(image_data):
     try:
-        # Check if image_data contains the base64 prefix
         if "," in image_data:
-            # Decode base64 image data
             header, encoded = image_data.split(",", 1)
             binary_data = base64.b64decode(encoded)
         else:
-            # Try to decode directly if no prefix
             try:
                 binary_data = base64.b64decode(image_data)
             except Exception as e:
                 logger.error(f"Failed to decode image data: {e}")
                 return None
         
-        # Save to temp file
         temp_path = "temp_frame.jpg"
         with open(temp_path, "wb") as f:
             f.write(binary_data)
         
-        # Read the image
         frame = cv2.imread(temp_path)
-        
-        # Check if image was read successfully
         if frame is None:
             logger.error("Failed to read image from file")
             return None
-            
         return frame
     except Exception as e:
         logger.error(f"Error capturing frame: {e}")
         return None
 
-# Generate technical question
+# Generate technical question based on extracted skills
 def generate_tech_question(response=None):
+    global extracted_skills
     if not model:
         logger.warning("Model not initialized, using fallback question")
         return "What is the difference between a list and a tuple in Python?"
     try:
-        if not response:
-            prompt = "Ask a beginner-level technical interview question about Python."
+        if extracted_skills and len(extracted_skills) > 0:
+            # Randomly select a skill from extracted_skills for variety
+            skill = random.choice(extracted_skills)
+            if not response:
+                prompt = f"Ask a basic-level technical interview question about {skill}."
+            else:
+                prompt = f"Based on the response: '{response}', ask a basic follow-up question about {skill}."
         else:
-            prompt = f"Based on the response: '{response}', ask a follow-up technical question about Python."
+            if not response:
+                prompt = "Ask a beginner-level technical interview question about Python."
+            else:
+                prompt = f"Based on the response: '{response}', ask a follow-up technical question about Python."
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
@@ -148,7 +155,6 @@ def analyze_soft_skills(text, pitch, energy, emotions=None):
         enthusiasm = "High" if energy > 0.1 else "Low"
         positivity = sentiment['compound']
         
-        # Add emotion analysis
         emotion_feedback = ""
         if emotions:
             dominant_emotion = max(emotions, key=emotions.get)
@@ -176,15 +182,108 @@ def convert_to_wav(input_file, output_file="response.wav"):
         logger.error(f"Error converting audio to WAV: {e}")
         return None
 
-# Route to start the interview
+# Extract text from resume
+def extract_text(file):
+    try:
+        text = ""
+        if file.filename.endswith('.pdf'):
+            pdf_reader = PyPDF2.PdfReader(file)
+            for page in pdf_reader.pages:
+                page_text = page.extract_text() or ""
+                text += page_text + "\n"
+        elif file.filename.endswith('.docx'):
+            doc = docx.Document(file)
+            for paragraph in doc.paragraphs:
+                para_text = paragraph.text or ""
+                text += para_text + "\n"
+        else:
+            logger.error("Unsupported file format")
+            return ""
+        return text.strip()
+    except Exception as e:
+        logger.error(f"Error extracting text: {e}")
+        return ""
+
+# Extract skills from text
+def extract_skills(text):
+    global extracted_skills
+    try:
+        skills_list = [
+            "python", "java", "c", "c++", "javascript", "sql", "html", "css",
+            "ruby", "php", "go", "rust", "typescript", "kotlin", "swift",
+            "scala", "r", "perl", "matlab", "bash", "powershell",
+
+            "flask", "django", "spring", "react", "angular", "vue.js", "node.js",
+            "express", "laravel", "rails", "aspnet", "svelte",
+
+            "android", "ios", "flutter", "xamarin", "react native",
+
+            "tensorflow", "pytorch", "scikit-learn", "keras", "pandas", "numpy",
+            "opencv", "theano", "caffe", "mxnet",
+
+            "hadoop", "spark", "kafka", "flink", "airflow", "tableau", "power bi",
+            "dask", "apache hive", "apache pig",
+
+            "mongodb", "postgresql", "mysql", "oracle", "sqlite", "cassandra",
+            "redis", "elasticsearch", "mariadb", "firebase",
+
+            "aws", "azure", "google cloud", "ibm cloud", "oracle cloud", "heroku",
+            "digitalocean", "linode",
+
+            "docker", "kubernetes", "jenkins", "ansible", "terraform", "chef",
+            "puppet", "circleci", "travis ci", "github actions", "gitlab ci",
+            "bitbucket pipelines",
+
+            "git", "svn", "mercurial", "perforce",
+
+            "apache", "nginx", "tomcat", "iis", "haproxy", "traefik", "dns",
+            "dhcp", "iptables", "wireguard",
+
+            "selenium", "junit", "pytest", "mocha", "jest", "cypress", "postman",
+            "soapui",
+
+            "linux", "windows server", "macos", "ubuntu", "centos", "redhat",
+            "vim", "emacs", "vscode", "intellij", "eclipse", "grafana",
+            "prometheus", "loki", "jaeger", "rabbitmq", "celery", "gunicorn",
+            "supervisor", "logstash", "kibana", "splunk",
+
+            "metasploit", "nmap", "wireshark", "burp suite", "owasp zap",
+            "nessus", "qualys",
+
+            "arduino", "raspberry pi", "esp32", "stm32", "zigbee", "mqtt",
+
+            "graphql", "rest", "soap", "websocket", "grpc", "protobuf",
+            "webpack", "babel", "eslint", "prettier", "rollup"
+        ]
+        doc = nlp(text.lower())
+        extracted_skills = set()  # Use set to avoid duplicates during extraction
+
+        for i in range(len(doc)):
+            for skill in skills_list:
+                skill_tokens = skill.split()
+                if len(skill_tokens) == 1:
+                    if doc[i].text == skill:
+                        extracted_skills.add(skill)
+                else:
+                    window = doc[i:i + len(skill_tokens)]
+                    if all(t.text == skill_tokens[j] for j, t in enumerate(window)) and len(window) == len(skill_tokens):
+                        extracted_skills.add(skill)
+
+        extracted_skills = list(extracted_skills)  # Convert to list for return
+        logger.info(f"Extracted skills: {extracted_skills} (Count: {len(extracted_skills)})")
+        return extracted_skills
+    except Exception as e:
+        logger.error(f"Error extracting skills: {e}")
+        return []
+
+# Routes
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Route to start the interview
 @app.route('/start_interview', methods=['POST'])
 def start_interview():
-    global conversation_history
+    global conversation_history, current_interview_type, extracted_skills
     try:
         interview_type = request.json.get('type')
         if not interview_type:
@@ -192,6 +291,7 @@ def start_interview():
             return jsonify({"error": "Interview type not provided"}), 400
 
         conversation_history = []
+        current_interview_type = interview_type  # Persist the type
         
         if interview_type == "tech":
             question = generate_tech_question()
@@ -207,15 +307,13 @@ def start_interview():
         return jsonify({"question": question, "audio": audio_file})
     except Exception as e:
         logger.error(f"Error in start_interview: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)}), 400
 
-# Route to submit response
 @app.route('/submit_response', methods=['POST'])
 def submit_response():
-    global conversation_history
+    global conversation_history, current_interview_type, extracted_skills
     try:
-        # Handle form data for interview_type and audio file
-        interview_type = request.form.get('type')
+        interview_type = request.form.get('type') or current_interview_type  # Fallback to persisted type
         if not interview_type:
             logger.error("Interview type not provided")
             return jsonify({"error": "Interview type not provided"}), 400
@@ -229,16 +327,11 @@ def submit_response():
             logger.error("No selected file")
             return jsonify({"error": "No selected file"}), 400
 
-        # Save the uploaded file with its original name temporarily
         temp_audio_path = os.path.join("temp_audio")
         audio_file.save(temp_audio_path)
-        
-        # Convert to WAV format
         audio_path = convert_to_wav(temp_audio_path)
         if not audio_path:
             return jsonify({"error": "Failed to convert audio to WAV"}), 500
-
-        # Clean up temporary file
         if os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
 
@@ -256,7 +349,6 @@ def submit_response():
         
         conversation_history.append({"role": "user", "text": response_text})
         
-        # Capture and analyze facial emotion
         emotions = None
         dominant_emotion = None
         image_data = request.form.get('image_data')
@@ -270,41 +362,55 @@ def submit_response():
                 except Exception as e:
                     logger.error(f"Error processing facial emotions: {e}")
                     emotions = None
-                    dominant_emotion = Nones
-            next_question = generate_tech_question(response_text)
-            audio_file = text_to_speech(next_question)
-            if not audio_file:
-                return jsonify({"error": "Failed to generate audio"}), 500
-            conversation_history.append({"role": "interviewer", "text": next_question})
-            logger.info(f"Tech interview, next question: {next_question}")
-            return jsonify({"question": next_question, "audio": audio_file})
-        
+                    dominant_emotion = None
+            next_question = generate_tech_question(response_text) if interview_type == "tech" else generate_hr_question()
         else:
             pitch, energy = analyze_speech(audio_path)
             soft_skills = analyze_soft_skills(response_text, pitch, energy, emotions)
             
-            # Create feedback with proper handling for None values
             feedback_parts = [
                 f"Confidence: {soft_skills['confidence']}",
                 f"Enthusiasm: {soft_skills['enthusiasm']}",
                 f"Positivity: {soft_skills['positivity']:.2f}"
             ]
-            
             if soft_skills['emotion_feedback']:
                 feedback_parts.append(soft_skills['emotion_feedback'])
-                
             feedback = ", ".join(feedback_parts)
             
-            next_question = "How do you handle stress in the workplace?"
-            audio_file = text_to_speech(next_question)
-            if not audio_file:
-                return jsonify({"error": "Failed to generate audio"}), 500
-            conversation_history.append({"role": "interviewer", "text": next_question})
-            logger.info(f"HR interview, next question: {next_question}, feedback: {feedback}")
-            return jsonify({"question": next_question, "audio": audio_file, "feedback": feedback})
+            next_question = generate_tech_question(response_text) if interview_type == "tech" else generate_hr_question()
+
+        audio_file = text_to_speech(next_question)
+        if not audio_file:
+            return jsonify({"error": "Failed to generate audio"}), 500
+        conversation_history.append({"role": "interviewer", "text": next_question})
+        logger.info(f"{interview_type} interview, next question: {next_question}, feedback: {feedback if 'feedback' in locals() else 'N/A'}")
+        return jsonify({"question": next_question, "audio": audio_file, "feedback": feedback if 'feedback' in locals() else None})
     except Exception as e:
         logger.error(f"Error in submit_response: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/upload_resume', methods=['POST'])
+def upload_resume():
+    global extracted_skills
+    try:
+        if 'file' not in request.files:
+            logger.error("No file part in request")
+            return jsonify({"error": "No file part"}), 400
+        file = request.files['file']
+        if file.filename == '':
+            logger.error("No selected file")
+            return jsonify({"error": "No selected file"}), 400
+        if file:
+            text = extract_text(file)
+            if not text:
+                return jsonify({"error": "Failed to extract text from resume"}), 500
+            skills = extract_skills(text)
+            extracted_skills = skills  # Update global extracted_skills
+            logger.info(f"Extracted skills: {extracted_skills}")
+            return jsonify({"skills": extracted_skills})
+    except Exception as e:
+        logger.error(f"Error in upload_resume: {e}")
+        return jsonify({"error": str(e)}), 400
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)

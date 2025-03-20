@@ -40,6 +40,7 @@
             <li><a href="#home" class="nav-link active">Home</a></li>
             <li><a href="#tech" class="nav-link">Tech Interview</a></li>
             <li><a href="#hr" class="nav-link">HR Interview</a></li>
+            <li><a href="#resume" class="nav-link">Upload Resume</a></li>
             <li><a href="#about" class="nav-link">About</a></li>
           </ul>
         </nav>
@@ -194,6 +195,28 @@
           <span class="close"></span>
         </article>
 
+        <!-- Resume Upload Section -->
+        <article id="resume">
+          <div class="content">
+            <header>
+              <h2>Upload Your Resume</h2>
+              <p>Extract skills from your resume to enhance your interview prep.</p>
+            </header>
+            <div class="inner">
+              <div class="box">
+                <form id="resumeForm" enctype="multipart/form-data">
+                  <input type="file" id="resumeFile" name="file" accept=".pdf,.docx">
+                  <button type="submit" class="button">
+                    <i class="fas fa-upload"></i> Upload and Parse
+                  </button>
+                </form>
+                <p id="skillsOutput"></p>
+              </div>
+            </div>
+          </div>
+          <span class="close"></span>
+        </article>
+
         <!-- About Section -->
         <article id="about">
           <div class="content">
@@ -247,29 +270,23 @@
     <script>
       // Navigation Interactivity
       $(document).ready(function () {
-        // Handle navigation link clicks
         $(".nav-link").on("click", function (e) {
           e.preventDefault();
-          const target = $(this).attr("href").substring(1); // Get section ID (e.g., "home")
+          const target = $(this).attr("href").substring(1);
 
-          // Update active article
           $("#main article").removeClass("active");
           $(`#${target}`).addClass("active");
 
-          // Update active nav link
           $("#header nav ul li a").removeClass("active");
           $(this).addClass("active");
 
-          // Smooth scroll to the top of the active article
           $("html, body").animate(
             {
-              scrollTop:
-                $(`#${target}`).offset().top - $("#header").outerHeight(),
+              scrollTop: $(`#${target}`).offset().top - $("#header").outerHeight(),
             },
             500
           );
 
-          // Update body state for background blur
           if (target !== "home") {
             $("body").addClass("is-article-visible");
           } else {
@@ -277,7 +294,6 @@
           }
         });
 
-        // Handle close button
         $(".close").on("click", function () {
           $("#main article").removeClass("active");
           $("body").removeClass("is-article-visible");
@@ -292,52 +308,29 @@
           );
         });
 
-        // Dimension preload
         $(".is-preload").removeClass("is-preload");
       });
 
       // Interview and Camera Functionality
       let mediaRecorderTech, mediaRecorderHR;
-      let audioChunksTech = [],
-        audioChunksHR = [];
+      let audioChunksTech = [], audioChunksHR = [];
       let streamTech, streamHR;
-      let isRecordingTech = false,
-        isRecordingHR = false;
+      let isRecordingTech = false, isRecordingHR = false;
       let videoStreamTech, videoStreamHR;
 
       // Tech Interview
-      document
-        .getElementById("startInterviewTech")
-        .addEventListener("click", () => startInterview("tech"));
-      document
-        .getElementById("startRecordingTech")
-        .addEventListener("click", () => startRecording("tech"));
-      document
-        .getElementById("stopRecordingTech")
-        .addEventListener("click", () => stopRecording("tech"));
-      document
-        .getElementById("startCameraTech")
-        .addEventListener("click", () => startCamera("tech"));
-      document
-        .getElementById("stopCameraTech")
-        .addEventListener("click", () => stopCamera("tech"));
+      document.getElementById("startInterviewTech").addEventListener("click", () => startInterview("tech"));
+      document.getElementById("startRecordingTech").addEventListener("click", () => startRecording("tech"));
+      document.getElementById("stopRecordingTech").addEventListener("click", () => stopRecording("tech"));
+      document.getElementById("startCameraTech").addEventListener("click", () => startCamera("tech"));
+      document.getElementById("stopCameraTech").addEventListener("click", () => stopCamera("tech"));
 
       // HR Interview
-      document
-        .getElementById("startInterviewHR")
-        .addEventListener("click", () => startInterview("hr"));
-      document
-        .getElementById("startRecordingHR")
-        .addEventListener("click", () => startRecording("hr"));
-      document
-        .getElementById("stopRecordingHR")
-        .addEventListener("click", () => stopRecording("hr"));
-      document
-        .getElementById("startCameraHR")
-        .addEventListener("click", () => startCamera("hr"));
-      document
-        .getElementById("stopCameraHR")
-        .addEventListener("click", () => stopCamera("hr"));
+      document.getElementById("startInterviewHR").addEventListener("click", () => startInterview("hr"));
+      document.getElementById("startRecordingHR").addEventListener("click", () => startRecording("hr"));
+      document.getElementById("stopRecordingHR").addEventListener("click", () => stopRecording("hr"));
+      document.getElementById("startCameraHR").addEventListener("click", () => startCamera("hr"));
+      document.getElementById("stopCameraHR").addEventListener("click", () => stopCamera("hr"));
 
       async function startInterview(type) {
         const response = await fetch("/start_interview", {
@@ -351,11 +344,8 @@
           return;
         }
         const suffix = type === "tech" ? "Tech" : "HR";
-        document.getElementById(`questionText${suffix}`).textContent =
-          data.question;
-        document.getElementById(
-          `audioPlayer${suffix}`
-        ).src = `/static/${data.audio}`;
+        document.getElementById(`questionText${suffix}`).textContent = data.question;
+        document.getElementById(`audioPlayer${suffix}`).src = `/static/${data.audio}`;
         document.getElementById(`audioPlayer${suffix}`).play();
       }
 
@@ -405,7 +395,6 @@
           formData.append("audio", audioBlob, "response.webm");
           formData.append("type", type);
 
-          // Capture and send video frame
           const videoFeed = document.getElementById(`videoFeed${suffix}`);
           if (videoFeed.srcObject) {
             const canvas = document.createElement("canvas");
@@ -413,7 +402,7 @@
             canvas.height = videoFeed.videoHeight;
             const context = canvas.getContext("2d");
             context.drawImage(videoFeed, 0, 0, canvas.width, canvas.height);
-            const imageData = canvas.toDataURL("image/jpeg").split(",")[1]; // Get base64 data
+            const imageData = canvas.toDataURL("image/jpeg").split(",")[1];
             formData.append("image_data", imageData);
           }
 
@@ -426,15 +415,11 @@
           if (data.error) {
             console.error("Error:", data.error);
           } else {
-            document.getElementById(`questionText${suffix}`).textContent =
-              data.question;
-            document.getElementById(
-              `audioPlayer${suffix}`
-            ).src = `/static/${data.audio}`;
+            document.getElementById(`questionText${suffix}`).textContent = data.question;
+            document.getElementById(`audioPlayer${suffix}`).src = `/static/${data.audio}`;
             document.getElementById(`audioPlayer${suffix}`).play();
             if (data.feedback) {
-              document.getElementById(`feedbackText${suffix}`).textContent =
-                data.feedback;
+              document.getElementById(`feedbackText${suffix}`).textContent = data.feedback;
             }
           }
 
@@ -481,21 +466,17 @@
         const stopButton = document.getElementById(`stopCamera${suffix}`);
 
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-          });
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
           videoFeed.srcObject = stream;
-          videoStreamTech = stream; // Store for tech
-          videoStreamHR = stream; // Store for HR (could be separated if needed)
+          videoStreamTech = stream;
+          videoStreamHR = stream;
           videoFeed.style.display = "block";
           startButton.style.display = "none";
           stopButton.style.display = "inline-block";
           logger.info(`Camera started for ${type}`);
         } catch (error) {
           console.error("Error accessing camera:", error);
-          alert(
-            "Could not access the camera. Please allow camera permissions."
-          );
+          alert("Could not access the camera. Please allow camera permissions.");
         }
       }
 
@@ -514,6 +495,34 @@
           logger.info(`Camera stopped for ${type}`);
         }
       }
+
+      // Resume Upload
+      document.getElementById("resumeForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = new FormData();
+        const fileInput = document.getElementById("resumeFile");
+        if (!fileInput.files.length) {
+          document.getElementById("skillsOutput").textContent = "Please select a file.";
+          return;
+        }
+        formData.append("file", fileInput.files[0]);
+        
+        try {
+          const response = await fetch("/upload_resume", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await response.json();
+          if (data.error) {
+            document.getElementById("skillsOutput").textContent = `Error: ${data.error}`;
+          } else {
+            document.getElementById("skillsOutput").textContent = `Skills: ${data.skills.join(", ")}`;
+          }
+        } catch (error) {
+          console.error("Error uploading resume:", error);
+          document.getElementById("skillsOutput").textContent = "Error uploading resume.";
+        }
+      });
     </script>
   </body>
 </html>
