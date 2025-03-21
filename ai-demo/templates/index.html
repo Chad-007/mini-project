@@ -11,7 +11,7 @@
     />
     <!-- Font Awesome -->
     <link rel="stylesheet" href="/static/css/fontawesome-all.min.css" />
-    <!-- Custom CSS based on Dimension template -->
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/css/dimension-custom.css" />
     <style>
       /* Temporary styles for video feed */
@@ -24,9 +24,40 @@
       .video-container {
         text-align: center;
       }
+      /* Warning modal styles */
+      #warningModal {
+        display: none; /* Hidden by default */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+      }
+      #warningModalContent {
+        text-align: center;
+      }
+      #warningModal button {
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+      }
     </style>
   </head>
   <body class="is-preload">
+    <!-- Warning modal overlay -->
+    <div id="warningModal">
+      <div id="warningModalContent">
+        <p>Interview Paused. Do not switch tabs or exit full screen.</p>
+        <button onclick="resumeInterview()">Resume Interview</button>
+      </div>
+    </div>
+
     <!-- Background -->
     <div id="bg"></div>
 
@@ -273,18 +304,87 @@
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-      // Navigation Interactivity
+      // Fullscreen helper functions
+      function enterFullScreen() {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+          elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+          elem.msRequestFullscreen();
+        }
+      }
+
+      function exitFullScreen() {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      }
+
+      // Listen for changes in fullscreen mode
+      document.addEventListener("fullscreenchange", function () {
+        if (!document.fullscreenElement) {
+          // If fullscreen mode was exited during an interview
+          pauseInterview();
+          showWarningModal();
+        }
+      });
+
+      // Warn when switching tabs (still a warning only)
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) {
+          alert("Switching tabs is not allowed during the assessment.");
+        }
+      });
+
+      // Listen for ESC key events to pause the interview and exit fullscreen
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+          exitFullScreen();
+          pauseInterview();
+          showWarningModal();
+          e.preventDefault();
+        }
+      });
+
+      function pauseInterview() {
+        // Stop recordings and cameras
+        stopRecording("tech");
+        stopRecording("hr");
+        stopCamera("tech");
+        stopCamera("hr");
+        // Pause any playing audio
+        document.getElementById("audioPlayerTech").pause();
+        document.getElementById("audioPlayerHR").pause();
+      }
+
+      function showWarningModal() {
+        document.getElementById("warningModal").style.display = "flex";
+      }
+
+      function resumeInterview() {
+        document.getElementById("warningModal").style.display = "none";
+        // Optionally, restart any paused components if needed
+      }
+
+      // Navigation interactivity
       $(document).ready(function () {
         $(".nav-link").on("click", function (e) {
           e.preventDefault();
           const target = $(this).attr("href").substring(1);
-
           $("#main article").removeClass("active");
           $(`#${target}`).addClass("active");
-
           $("#header nav ul li a").removeClass("active");
           $(this).addClass("active");
-
           $("html, body").animate(
             {
               scrollTop:
@@ -292,14 +392,12 @@
             },
             500
           );
-
           if (target !== "home") {
             $("body").addClass("is-article-visible");
           } else {
             $("body").removeClass("is-article-visible");
           }
         });
-
         $(".close").on("click", function () {
           $("#main article").removeClass("active");
           $("body").removeClass("is-article-visible");
@@ -313,7 +411,6 @@
             500
           );
         });
-
         $(".is-preload").removeClass("is-preload");
       });
 
@@ -332,7 +429,10 @@
       // Tech Interview
       document
         .getElementById("startInterviewTech")
-        .addEventListener("click", () => startInterview("tech"));
+        .addEventListener("click", () => {
+          enterFullScreen();
+          startInterview("tech");
+        });
       document
         .getElementById("startRecordingTech")
         .addEventListener("click", () => startRecording("tech"));
@@ -349,7 +449,10 @@
       // HR Interview
       document
         .getElementById("startInterviewHR")
-        .addEventListener("click", () => startInterview("hr"));
+        .addEventListener("click", () => {
+          enterFullScreen();
+          startInterview("hr");
+        });
       document
         .getElementById("startRecordingHR")
         .addEventListener("click", () => startRecording("hr"));
@@ -382,43 +485,33 @@
           `audioPlayer${suffix}`
         ).src = `/static/${data.audio}`;
         document.getElementById(`audioPlayer${suffix}`).play();
-        document.getElementById(`feedbackText${suffix}`).textContent = ""; // Clear previous feedback
+        document.getElementById(`feedbackText${suffix}`).textContent = "";
         console.log(`Started ${type} interview, question: ${data.question}`);
       }
 
       async function startRecording(type) {
         const suffix = type === "tech" ? "Tech" : "HR";
-        let mediaRecorder, audioChunks, stream, isRecording;
-
+        let mediaRecorder, audioChunks, stream;
         if (type === "tech") {
           if (isRecordingTech) {
             console.log("Tech recording already in progress.");
             return;
           }
           isRecordingTech = true;
-          mediaRecorder = mediaRecorderTech;
           audioChunks = audioChunksTech;
-          stream = streamTech;
-          isRecording = isRecordingTech;
         } else {
           if (isRecordingHR) {
             console.log("HR recording already in progress.");
             return;
           }
           isRecordingHR = true;
-          mediaRecorder = mediaRecorderHR;
           audioChunks = audioChunksHR;
-          stream = streamHR;
-          isRecording = isRecordingHR;
         }
-
         document.getElementById(`startRecording${suffix}`).disabled = true;
         document.getElementById(`stopRecording${suffix}`).disabled = false;
-
         try {
           stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           mediaRecorder = new MediaRecorder(stream);
-
           if (type === "tech") {
             mediaRecorderTech = mediaRecorder;
             streamTech = stream;
@@ -426,21 +519,17 @@
             mediaRecorderHR = mediaRecorder;
             streamHR = stream;
           }
-
           mediaRecorder.ondataavailable = (event) => {
             if (event.data.size > 0) {
               audioChunks.push(event.data);
             }
           };
-
           mediaRecorder.onstop = async () => {
             const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-            audioChunks.length = 0; // Clear chunks after creating blob
-
+            audioChunks.length = 0;
             const formData = new FormData();
             formData.append("audio", audioBlob, "response.webm");
-            formData.append("type", type); // Ensure type is sent
-
+            formData.append("type", type);
             const videoFeed = document.getElementById(`videoFeed${suffix}`);
             if (videoFeed.srcObject) {
               const canvas = document.createElement("canvas");
@@ -451,14 +540,12 @@
               const imageData = canvas.toDataURL("image/jpeg").split(",")[1];
               formData.append("image_data", imageData);
             }
-
             console.log(`Submitting response for ${type} interview...`);
             const response = await fetch("/submit_response", {
               method: "POST",
               body: formData,
             });
             const data = await response.json();
-
             if (data.error) {
               console.error("Error submitting response:", data.error);
             } else {
@@ -468,30 +555,20 @@
                 `audioPlayer${suffix}`
               ).src = `/static/${data.audio}`;
               document.getElementById(`audioPlayer${suffix}`).play();
-              if (data.feedback) {
-                document.getElementById(`feedbackText${suffix}`).textContent =
-                  data.feedback;
-              } else {
-                document.getElementById(`feedbackText${suffix}`).textContent =
-                  "";
-              }
+              document.getElementById(`feedbackText${suffix}`).textContent =
+                data.feedback || "";
               console.log(
                 `Received new question for ${type}: ${data.question}`
               );
-              console.log(`Feedback: ${data.feedback || "None"}`);
             }
-
             if (type === "tech") {
               isRecordingTech = false;
-              audioChunksTech = [];
             } else {
               isRecordingHR = false;
-              audioChunksHR = [];
             }
             document.getElementById(`startRecording${suffix}`).disabled = false;
             document.getElementById(`stopRecording${suffix}`).disabled = true;
           };
-
           mediaRecorder.start();
           console.log(`Recording started for ${type}...`);
         } catch (error) {
@@ -511,8 +588,7 @@
 
       function stopRecording(type) {
         const suffix = type === "tech" ? "Tech" : "HR";
-        let mediaRecorder, stream, isRecording;
-
+        let mediaRecorder, stream;
         if (type === "tech") {
           if (!isRecordingTech) {
             console.log("No active tech recording to stop.");
@@ -530,7 +606,6 @@
           stream = streamHR;
           isRecordingHR = false;
         }
-
         if (mediaRecorder && mediaRecorder.state !== "inactive") {
           mediaRecorder.stop();
         }
@@ -553,7 +628,6 @@
         const videoFeed = document.getElementById(`videoFeed${suffix}`);
         const startButton = document.getElementById(`startCamera${suffix}`);
         const stopButton = document.getElementById(`stopCamera${suffix}`);
-
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
             video: true,
@@ -581,9 +655,7 @@
         const videoFeed = document.getElementById(`videoFeed${suffix}`);
         const startButton = document.getElementById(`startCamera${suffix}`);
         const stopButton = document.getElementById(`stopCamera${suffix}`);
-
         let videoStream = type === "tech" ? videoStreamTech : videoStreamHR;
-
         if (videoFeed.srcObject) {
           videoFeed.srcObject.getTracks().forEach((track) => track.stop());
           videoFeed.srcObject = null;
@@ -612,7 +684,6 @@
             return;
           }
           formData.append("file", fileInput.files[0]);
-
           try {
             const response = await fetch("/upload_resume", {
               method: "POST",
