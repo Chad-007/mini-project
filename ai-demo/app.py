@@ -119,21 +119,24 @@ def generate_tech_question(response=None):
         logger.warning("Model not initialized, using fallback question")
         return "What is the difference between a list and a tuple in Python?"
     try:
-        # Build context from conversation history
         context = "\n".join([f"{entry['role']}: {entry['text']}" for entry in conversation_history])
         if extracted_skills and len(extracted_skills) > 0:
             skill = random.choice(extracted_skills)
             if not response:
-                prompt = f"Given the conversation context:\n{context}\nAsk a basic-level technical interview question about {skill}."
+                prompt = (f"Given the conversation context:\n{context}\n"
+                          f"Ask only a basic-level technical interview question about {skill}.")
             else:
-                prompt = f"Given the conversation context:\n{context}\nBased on the response: '{response}', ask a basic follow-up question about {skill}."
+                prompt = (f"Given the conversation context:\n{context}\n"
+                          f"Based on the response: '{response}', ask only a basic follow-up technical question about {skill}.")
         else:
             if not response:
-                prompt = f"Given the conversation context:\n{context}\nAsk a beginner-level technical interview question about Python."
+                prompt = (f"Given the conversation context:\n{context}\n"
+                          "Ask only a beginner-level technical interview question about Python.")
             else:
-                prompt = f"Given the conversation context:\n{context}\nBased on the response: '{response}', ask a follow-up technical question about Python."
-        response = model.generate_content(prompt)
-        question = response.text
+                prompt = (f"Given the conversation context:\n{context}\n"
+                          "Based on the response: '{response}', ask only a follow-up technical question about Python.")
+        response_obj = model.generate_content(prompt)
+        question = response_obj.text
         logger.info(f"Generated tech question: {question}")
         return question
     except Exception as e:
@@ -143,23 +146,20 @@ def generate_tech_question(response=None):
 # Generate HR question based on conversation history
 def generate_hr_question():
     global hr_question_index, hr_questions, conversation_history
-    # Build context from conversation history
     context = "\n".join([f"{entry['role']}: {entry['text']}" for entry in conversation_history])
     try:
-        # Use Gemini to generate a follow-up HR question based on context
-        if len(conversation_history) > 1:  # If there's a user response
-            prompt = f"Given the conversation context:\n{context}\nAsk a follow-up HR interview question."
-            response = model.generate_content(prompt)
-            question = response.text
+        if len(conversation_history) > 1:
+            prompt = (f"Given the conversation context:\n{context}\n"
+                      "Ask only a follow-up HR interview question.")
+            response_obj = model.generate_content(prompt)
+            question = response_obj.text
         else:
-            # For the first question, cycle through the predefined list
             question = hr_questions[hr_question_index]
-            hr_question_index = (hr_question_index + 1) % len(hr_questions)  # Cycle through questions
+            hr_question_index = (hr_question_index + 1) % len(hr_questions)
         logger.info(f"Generated HR question: {question}")
         return question
     except Exception as e:
         logger.error(f"Error generating HR question: {e}")
-        # Fallback to the predefined list if Gemini fails
         question = hr_questions[hr_question_index]
         hr_question_index = (hr_question_index + 1) % len(hr_questions)
         return question
@@ -167,18 +167,15 @@ def generate_hr_question():
 # Convert text to speech using ElevenLabs
 def text_to_speech(text, filename="question.mp3"):
     try:
-        # Generate audio using ElevenLabs
         audio = client.generate(
             text=text,
-            voice="Rachel",  # Choose a voice from ElevenLabs (you can find voice IDs in the Voice Library)
+            voice="Rachel",
             model="eleven_monolingual_v1",
             voice_settings={
-                "stability": 0.7,  # Adjust for consistency
-                "similarity_boost": 0.8  # Adjust for voice likeness
+                "stability": 0.7,
+                "similarity_boost": 0.8
             }
         )
-
-        # Save the audio file
         audio_path = os.path.join("static", filename)
         with open(audio_path, "wb") as f:
             for chunk in audio:
@@ -209,12 +206,10 @@ def analyze_soft_skills(text, pitch, energy, emotions=None):
         confidence = "High" if pitch > 100 else "Low"
         enthusiasm = "High" if energy > 0.1 else "Low"
         positivity = sentiment['compound']
-        
         emotion_feedback = ""
         if emotions:
             dominant_emotion = max(emotions, key=emotions.get)
             emotion_feedback = f"Dominant Emotion: {dominant_emotion}"
-        
         return {
             "confidence": confidence,
             "enthusiasm": enthusiasm,
@@ -267,52 +262,37 @@ def extract_skills(text):
             "python", "java", "c", "c++", "javascript", "sql", "html", "css",
             "ruby", "php", "go", "rust", "typescript", "kotlin", "swift",
             "scala", "r", "perl", "matlab", "bash", "powershell",
-
             "flask", "django", "spring", "react", "angular", "vue.js", "node.js",
             "express", "laravel", "rails", "aspnet", "svelte",
-
             "android", "ios", "flutter", "xamarin", "react native",
-
             "tensorflow", "pytorch", "scikit-learn", "keras", "pandas", "numpy",
             "opencv", "theano", "caffe", "mxnet",
-
             "hadoop", "spark", "kafka", "flink", "airflow", "tableau", "power bi",
             "dask", "apache hive", "apache pig",
-
             "mongodb", "postgresql", "mysql", "oracle", "sqlite", "cassandra",
             "redis", "elasticsearch", "mariadb", "firebase",
-
             "aws", "azure", "google cloud", "ibm cloud", "oracle cloud", "heroku",
             "digitalocean", "linode",
-
             "docker", "kubernetes", "jenkins", "ansible", "terraform", "chef",
             "puppet", "circleci", "travis ci", "github actions", "gitlab ci",
             "bitbucket pipelines",
-
             "git", "svn", "mercurial", "perforce",
-
             "apache", "nginx", "tomcat", "iis", "haproxy", "traefik", "dns",
             "dhcp", "iptables", "wireguard",
-
             "selenium", "junit", "pytest", "mocha", "jest", "cypress", "postman",
             "soapui",
-
             "linux", "windows server", "macos", "Ubuntu", "centos", "redhat",
             "vim", "emacs", "vscode", "intellij", "eclipse", "grafana",
             "prometheus", "loki", "jaeger", "rabbitmq", "celery", "gunicorn",
             "supervisor", "logstash", "kibana", "splunk",
-
             "metasploit", "nmap", "wireshark", "burp suite", "owasp zap",
             "nessus", "qualys",
-
             "arduino", "raspberry pi", "esp32", "stm32", "zigbee", "mqtt",
-
             "graphql", "rest", "soap", "websocket", "grpc", "protobuf",
             "webpack", "babel", "eslint", "prettier", "rollup"
         ]
         doc = nlp(text.lower())
-        extracted_skills = set()  # Use set to avoid duplicates during extraction
-
+        extracted_skills = set()
         for i in range(len(doc)):
             for skill in skills_list:
                 skill_tokens = skill.split()
@@ -323,13 +303,13 @@ def extract_skills(text):
                     window = doc[i:i + len(skill_tokens)]
                     if all(t.text == skill_tokens[j] for j, t in enumerate(window)) and len(window) == len(skill_tokens):
                         extracted_skills.add(skill)
-
-        extracted_skills = list(extracted_skills)  # Convert to list for return
+        extracted_skills = list(extracted_skills)
         logger.info(f"Extracted skills: {extracted_skills} (Count: {len(extracted_skills)})")
         return extracted_skills
     except Exception as e:
         logger.error(f"Error extracting skills: {e}")
         return []
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -343,10 +323,9 @@ def start_interview():
             logger.error("Interview type not provided")
             return jsonify({"error": "Interview type not provided"}), 400
 
-        # Reset conversation state
         conversation_history = []
-        current_interview_type = interview_type  # Persist the type
-        hr_question_index = 0  # Reset HR question index
+        current_interview_type = interview_type
+        hr_question_index = 0
         logger.info(f"Starting interview with type: {current_interview_type}")
 
         if interview_type == "tech":
@@ -369,7 +348,6 @@ def start_interview():
 def submit_response():
     global conversation_history, current_interview_type, extracted_skills
     try:
-        # Determine interview type
         interview_type = request.form.get('type') or current_interview_type
         if not interview_type:
             logger.error("Interview type not provided and current_interview_type is None")
@@ -408,9 +386,6 @@ def submit_response():
         
         conversation_history.append({"role": "user", "text": response_text})
         
-        emotions = None
-        dominant_emotion = None
-        feedback = None
         image_data = request.form.get('image_data')
         if image_data:
             frame = capture_frame(image_data)
@@ -421,23 +396,9 @@ def submit_response():
                         logger.info(f"Detected emotions: {emotions}, Dominant Emotion: {dominant_emotion}")
                 except Exception as e:
                     logger.error(f"Error processing facial emotions: {e}")
-                    emotions = None
-                    dominant_emotion = None
             next_question = generate_tech_question(response_text) if interview_type == "tech" else generate_hr_question()
         else:
-            pitch, energy = analyze_speech(audio_path)
-            soft_skills = analyze_soft_skills(response_text, pitch, energy, emotions)
-            
-            feedback_parts = [
-                f"Confidence: {soft_skills['confidence']}",
-                f"Enthusiasm: {soft_skills['enthusiasm']}",
-                f"Positivity: {soft_skills['positivity']:.2f}"
-            ]
-            if soft_skills['emotion_feedback']:
-                feedback_parts.append(soft_skills['emotion_feedback'])
-            feedback = ", ".join(feedback_parts)
-            
-            # Generate the next question based on the interview type
+            # For this update, we ignore any additional feedback and ask only the next question.
             if interview_type == "tech":
                 next_question = generate_tech_question(response_text)
             else:
@@ -448,8 +409,8 @@ def submit_response():
             return jsonify({"error": "Failed to generate audio"}), 500
 
         conversation_history.append({"role": "interviewer", "text": next_question})
-        logger.info(f"{interview_type} interview, next question: {next_question}, feedback: {feedback if feedback else 'N/A'}")
-        return jsonify({"question": next_question, "audio": audio_file, "feedback": feedback})
+        logger.info(f"{interview_type} interview, next question: {next_question}")
+        return jsonify({"question": next_question, "audio": audio_file})
     except Exception as e:
         logger.error(f"Error in submit_response: {e}")
         return jsonify({"error": str(e)}), 400
@@ -470,7 +431,7 @@ def upload_resume():
             if not text:
                 return jsonify({"error": "Failed to extract text from resume"}), 500
             skills = extract_skills(text)
-            extracted_skills = skills  # Update global extracted_skills
+            extracted_skills = skills
             logger.info(f"Extracted skills: {extracted_skills}")
             return jsonify({"skills": extracted_skills})
     except Exception as e:
