@@ -1,7 +1,6 @@
 import os
 import google.generativeai as genai
 from flask import Flask, render_template, request, jsonify
-from gtts import gTTS
 import speech_recognition as sr
 import numpy as np
 import librosa
@@ -12,10 +11,11 @@ from pydub import AudioSegment
 from deepface import DeepFace  # For facial emotion detection
 import cv2  # For capturing video frames
 import base64
-import PyPDF2
-import  docx  # Use python-docx explicitly
+import PyPDF2   
+import docx  # Use python-docx explicitly
 import spacy
 import random
+from elevenlabs.client import ElevenLabs  # Import ElevenLabs client
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +25,9 @@ app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 # Configure Gemini API
 genai.configure(api_key="AIzaSyAU3lqb-xlubVzrTyDslPaxX_tmUD1i_eo")
+
+# Configure ElevenLabs API
+client = ElevenLabs(api_key="sk_9a801180ead9b45b91141854dc885998546c653d20edf5e0")
 
 # List available models and select one
 def get_available_model():
@@ -52,6 +55,21 @@ nlp = spacy.load("en_core_web_sm")
 conversation_history = []
 current_interview_type = None
 extracted_skills = []  # Global to store resume skills
+
+# List of HR questions to cycle through
+hr_questions = [
+    "Tell me about a time you worked in a team. How did you contribute?",
+    "Describe a challenging situation at work and how you handled it.",
+    "What motivates you to perform well in your job?",
+    "How do you handle stress and pressure in the workplace?",
+    "Where do you see yourself in five years?",
+    "Tell me about a time you failed. How did you deal with it?",
+    "What is your greatest strength and how have you used it in a professional setting?",
+    "How do you prioritize your tasks when you have multiple deadlines?"
+]
+
+# Counter to track the current HR question index
+hr_question_index = 0
 
 # Function to detect facial emotion using DeepFace
 def detect_emotion(frame):
@@ -94,45 +112,82 @@ def capture_frame(image_data):
         logger.error(f"Error capturing frame: {e}")
         return None
 
-# Generate technical question based on extracted skills
+# Generate technical question based on extracted skills and conversation history
 def generate_tech_question(response=None):
-    global extracted_skills
+    global extracted_skills, conversation_history
     if not model:
         logger.warning("Model not initialized, using fallback question")
         return "What is the difference between a list and a tuple in Python?"
     try:
+        # Build context from conversation history
+        context = "\n".join([f"{entry['role']}: {entry['text']}" for entry in conversation_history])
         if extracted_skills and len(extracted_skills) > 0:
-            # Randomly select a skill from extracted_skills for variety
             skill = random.choice(extracted_skills)
             if not response:
-                prompt = f"Ask a basic-level technical interview question about {skill}."
+                prompt = f"Given the conversation context:\n{context}\nAsk a basic-level technical interview question about {skill}."
             else:
-                prompt = f"Based on the response: '{response}', ask a basic follow-up question about {skill}."
+                prompt = f"Given the conversation context:\n{context}\nBased on the response: '{response}', ask a basic follow-up question about {skill}."
         else:
             if not response:
-                prompt = "Ask a beginner-level technical interview question about Python."
+                prompt = f"Given the conversation context:\n{context}\nAsk a beginner-level technical interview question about Python."
             else:
-                prompt = f"Based on the response: '{response}', ask a follow-up technical question about Python."
+                prompt = f"Given the conversation context:\n{context}\nBased on the response: '{response}', ask a follow-up technical question about Python."
         response = model.generate_content(prompt)
-        return response.text
+        question = response.text
+        logger.info(f"Generated tech question: {question}")
+        return question
     except Exception as e:
         logger.error(f"Error with Gemini API: {e}")
         return "What is the difference between a list and a tuple in Python?"
 
-# Generate HR question
+# Generate HR question based on conversation history
 def generate_hr_question():
-    return "Tell me about a time you worked in a team. How did you contribute?"
+    global hr_question_index, hr_questions, conversation_history
+    # Build context from conversation history
+    context = "\n".join([f"{entry['role']}: {entry['text']}" for entry in conversation_history])
+    try:
+        # Use Gemini to generate a follow-up HR question based on context
+        if len(conversation_history) > 1:  # If there's a user response
+            prompt = f"Given the conversation context:\n{context}\nAsk a follow-up HR interview question."
+            response = model.generate_content(prompt)
+            question = response.text
+        else:
+            # For the first question, cycle through the predefined list
+            question = hr_questions[hr_question_index]
+            hr_question_index = (hr_question_index + 1) % len(hr_questions)  # Cycle through questions
+        logger.info(f"Generated HR question: {question}")
+        return question
+    except Exception as e:
+        logger.error(f"Error generating HR question: {e}")
+        # Fallback to the predefined list if Gemini fails
+        question = hr_questions[hr_question_index]
+        hr_question_index = (hr_question_index + 1) % len(hr_questions)
+        return question
 
-# Convert text to speech
+# Convert text to speech using ElevenLabs
 def text_to_speech(text, filename="question.mp3"):
     try:
-        tts = gTTS(text=text, lang='en')
+        # Generate audio using ElevenLabs
+        audio = client.generate(
+            text=text,
+            voice="Rachel",  # Choose a voice from ElevenLabs (you can find voice IDs in the Voice Library)
+            model="eleven_monolingual_v1",
+            voice_settings={
+                "stability": 0.7,  # Adjust for consistency
+                "similarity_boost": 0.8  # Adjust for voice likeness
+            }
+        )
+
+        # Save the audio file
         audio_path = os.path.join("static", filename)
-        tts.save(audio_path)
+        with open(audio_path, "wb") as f:
+            for chunk in audio:
+                if chunk:
+                    f.write(chunk)
         logger.info(f"Audio file saved at: {audio_path}")
         return filename
     except Exception as e:
-        logger.error(f"Error in text-to-speech: {e}")
+        logger.error(f"Error in text-to-speech with ElevenLabs: {e}")
         return None
 
 # Analyze speech for pitch and energy
@@ -242,7 +297,7 @@ def extract_skills(text):
             "selenium", "junit", "pytest", "mocha", "jest", "cypress", "postman",
             "soapui",
 
-            "linux", "windows server", "macos", "ubuntu", "centos", "redhat",
+            "linux", "windows server", "macos", "Ubuntu", "centos", "redhat",
             "vim", "emacs", "vscode", "intellij", "eclipse", "grafana",
             "prometheus", "loki", "jaeger", "rabbitmq", "celery", "gunicorn",
             "supervisor", "logstash", "kibana", "splunk",
@@ -275,24 +330,25 @@ def extract_skills(text):
     except Exception as e:
         logger.error(f"Error extracting skills: {e}")
         return []
-
-# Routes
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/start_interview', methods=['POST'])
 def start_interview():
-    global conversation_history, current_interview_type, extracted_skills
+    global conversation_history, current_interview_type, extracted_skills, hr_question_index
     try:
         interview_type = request.json.get('type')
         if not interview_type:
             logger.error("Interview type not provided")
             return jsonify({"error": "Interview type not provided"}), 400
 
+        # Reset conversation state
         conversation_history = []
         current_interview_type = interview_type  # Persist the type
-        
+        hr_question_index = 0  # Reset HR question index
+        logger.info(f"Starting interview with type: {current_interview_type}")
+
         if interview_type == "tech":
             question = generate_tech_question()
         else:
@@ -313,10 +369,13 @@ def start_interview():
 def submit_response():
     global conversation_history, current_interview_type, extracted_skills
     try:
-        interview_type = request.form.get('type') or current_interview_type  # Fallback to persisted type
+        # Determine interview type
+        interview_type = request.form.get('type') or current_interview_type
         if not interview_type:
-            logger.error("Interview type not provided")
+            logger.error("Interview type not provided and current_interview_type is None")
             return jsonify({"error": "Interview type not provided"}), 400
+
+        logger.info(f"Processing response for interview type: {interview_type}, current_interview_type: {current_interview_type}")
 
         if 'audio' not in request.files:
             logger.error("No audio file provided")
@@ -351,6 +410,7 @@ def submit_response():
         
         emotions = None
         dominant_emotion = None
+        feedback = None
         image_data = request.form.get('image_data')
         if image_data:
             frame = capture_frame(image_data)
@@ -377,14 +437,19 @@ def submit_response():
                 feedback_parts.append(soft_skills['emotion_feedback'])
             feedback = ", ".join(feedback_parts)
             
-            next_question = generate_tech_question(response_text) if interview_type == "tech" else generate_hr_question()
+            # Generate the next question based on the interview type
+            if interview_type == "tech":
+                next_question = generate_tech_question(response_text)
+            else:
+                next_question = generate_hr_question()
 
         audio_file = text_to_speech(next_question)
         if not audio_file:
             return jsonify({"error": "Failed to generate audio"}), 500
+
         conversation_history.append({"role": "interviewer", "text": next_question})
-        logger.info(f"{interview_type} interview, next question: {next_question}, feedback: {feedback if 'feedback' in locals() else 'N/A'}")
-        return jsonify({"question": next_question, "audio": audio_file, "feedback": feedback if 'feedback' in locals() else None})
+        logger.info(f"{interview_type} interview, next question: {next_question}, feedback: {feedback if feedback else 'N/A'}")
+        return jsonify({"question": next_question, "audio": audio_file, "feedback": feedback})
     except Exception as e:
         logger.error(f"Error in submit_response: {e}")
         return jsonify({"error": str(e)}), 400

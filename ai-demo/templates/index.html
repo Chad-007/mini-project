@@ -9,7 +9,7 @@
       href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,300;0,600;1,300;1,600&display=swap"
       rel="stylesheet"
     />
-    <!-- Font Awesome (corrected path) -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="/static/css/fontawesome-all.min.css" />
     <!-- Custom CSS based on Dimension template -->
     <link rel="stylesheet" href="/static/css/dimension-custom.css" />
@@ -200,12 +200,19 @@
           <div class="content">
             <header>
               <h2>Upload Your Resume</h2>
-              <p>Extract skills from your resume to enhance your interview prep.</p>
+              <p>
+                Extract skills from your resume to enhance your interview prep.
+              </p>
             </header>
             <div class="inner">
               <div class="box">
                 <form id="resumeForm" enctype="multipart/form-data">
-                  <input type="file" id="resumeFile" name="file" accept=".pdf,.docx">
+                  <input
+                    type="file"
+                    id="resumeFile"
+                    name="file"
+                    accept=".pdf,.docx"
+                  />
                   <button type="submit" class="button">
                     <i class="fas fa-upload"></i> Upload and Parse
                   </button>
@@ -259,9 +266,7 @@
 
       <!-- Footer -->
       <footer id="footer">
-        <p class="copyright">
-          © 2025 CyberVerse AI</a>.
-        </p>
+        <p class="copyright">© 2025 CyberVerse AI.</p>
       </footer>
     </div>
 
@@ -282,7 +287,8 @@
 
           $("html, body").animate(
             {
-              scrollTop: $(`#${target}`).offset().top - $("#header").outerHeight(),
+              scrollTop:
+                $(`#${target}`).offset().top - $("#header").outerHeight(),
             },
             500
           );
@@ -312,27 +318,53 @@
       });
 
       // Interview and Camera Functionality
-      let mediaRecorderTech, mediaRecorderHR;
-      let audioChunksTech = [], audioChunksHR = [];
-      let streamTech, streamHR;
-      let isRecordingTech = false, isRecordingHR = false;
-      let videoStreamTech, videoStreamHR;
+      let mediaRecorderTech = null,
+        mediaRecorderHR = null;
+      let audioChunksTech = [],
+        audioChunksHR = [];
+      let streamTech = null,
+        streamHR = null;
+      let isRecordingTech = false,
+        isRecordingHR = false;
+      let videoStreamTech = null,
+        videoStreamHR = null;
 
       // Tech Interview
-      document.getElementById("startInterviewTech").addEventListener("click", () => startInterview("tech"));
-      document.getElementById("startRecordingTech").addEventListener("click", () => startRecording("tech"));
-      document.getElementById("stopRecordingTech").addEventListener("click", () => stopRecording("tech"));
-      document.getElementById("startCameraTech").addEventListener("click", () => startCamera("tech"));
-      document.getElementById("stopCameraTech").addEventListener("click", () => stopCamera("tech"));
+      document
+        .getElementById("startInterviewTech")
+        .addEventListener("click", () => startInterview("tech"));
+      document
+        .getElementById("startRecordingTech")
+        .addEventListener("click", () => startRecording("tech"));
+      document
+        .getElementById("stopRecordingTech")
+        .addEventListener("click", () => stopRecording("tech"));
+      document
+        .getElementById("startCameraTech")
+        .addEventListener("click", () => startCamera("tech"));
+      document
+        .getElementById("stopCameraTech")
+        .addEventListener("click", () => stopCamera("tech"));
 
       // HR Interview
-      document.getElementById("startInterviewHR").addEventListener("click", () => startInterview("hr"));
-      document.getElementById("startRecordingHR").addEventListener("click", () => startRecording("hr"));
-      document.getElementById("stopRecordingHR").addEventListener("click", () => stopRecording("hr"));
-      document.getElementById("startCameraHR").addEventListener("click", () => startCamera("hr"));
-      document.getElementById("stopCameraHR").addEventListener("click", () => stopCamera("hr"));
+      document
+        .getElementById("startInterviewHR")
+        .addEventListener("click", () => startInterview("hr"));
+      document
+        .getElementById("startRecordingHR")
+        .addEventListener("click", () => startRecording("hr"));
+      document
+        .getElementById("stopRecordingHR")
+        .addEventListener("click", () => stopRecording("hr"));
+      document
+        .getElementById("startCameraHR")
+        .addEventListener("click", () => startCamera("hr"));
+      document
+        .getElementById("stopCameraHR")
+        .addEventListener("click", () => stopCamera("hr"));
 
       async function startInterview(type) {
+        console.log(`Starting ${type} interview...`);
         const response = await fetch("/start_interview", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -340,13 +372,18 @@
         });
         const data = await response.json();
         if (data.error) {
-          console.error("Error:", data.error);
+          console.error("Error starting interview:", data.error);
           return;
         }
         const suffix = type === "tech" ? "Tech" : "HR";
-        document.getElementById(`questionText${suffix}`).textContent = data.question;
-        document.getElementById(`audioPlayer${suffix}`).src = `/static/${data.audio}`;
+        document.getElementById(`questionText${suffix}`).textContent =
+          data.question;
+        document.getElementById(
+          `audioPlayer${suffix}`
+        ).src = `/static/${data.audio}`;
         document.getElementById(`audioPlayer${suffix}`).play();
+        document.getElementById(`feedbackText${suffix}`).textContent = ""; // Clear previous feedback
+        console.log(`Started ${type} interview, question: ${data.question}`);
       }
 
       async function startRecording(type) {
@@ -354,14 +391,20 @@
         let mediaRecorder, audioChunks, stream, isRecording;
 
         if (type === "tech") {
-          if (isRecordingTech) return;
+          if (isRecordingTech) {
+            console.log("Tech recording already in progress.");
+            return;
+          }
           isRecordingTech = true;
           mediaRecorder = mediaRecorderTech;
           audioChunks = audioChunksTech;
           stream = streamTech;
           isRecording = isRecordingTech;
         } else {
-          if (isRecordingHR) return;
+          if (isRecordingHR) {
+            console.log("HR recording already in progress.");
+            return;
+          }
           isRecordingHR = true;
           mediaRecorder = mediaRecorderHR;
           audioChunks = audioChunksHR;
@@ -372,70 +415,98 @@
         document.getElementById(`startRecording${suffix}`).disabled = true;
         document.getElementById(`stopRecording${suffix}`).disabled = false;
 
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-
-        if (type === "tech") {
-          mediaRecorderTech = mediaRecorder;
-          streamTech = stream;
-        } else {
-          mediaRecorderHR = mediaRecorder;
-          streamHR = stream;
-        }
-
-        mediaRecorder.ondataavailable = (event) => {
-          audioChunks.push(event.data);
-        };
-
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-          audioChunks.length = 0;
-
-          const formData = new FormData();
-          formData.append("audio", audioBlob, "response.webm");
-          formData.append("type", type);
-
-          const videoFeed = document.getElementById(`videoFeed${suffix}`);
-          if (videoFeed.srcObject) {
-            const canvas = document.createElement("canvas");
-            canvas.width = videoFeed.videoWidth;
-            canvas.height = videoFeed.videoHeight;
-            const context = canvas.getContext("2d");
-            context.drawImage(videoFeed, 0, 0, canvas.width, canvas.height);
-            const imageData = canvas.toDataURL("image/jpeg").split(",")[1];
-            formData.append("image_data", imageData);
-          }
-
-          const response = await fetch("/submit_response", {
-            method: "POST",
-            body: formData,
-          });
-          const data = await response.json();
-
-          if (data.error) {
-            console.error("Error:", data.error);
-          } else {
-            document.getElementById(`questionText${suffix}`).textContent = data.question;
-            document.getElementById(`audioPlayer${suffix}`).src = `/static/${data.audio}`;
-            document.getElementById(`audioPlayer${suffix}`).play();
-            if (data.feedback) {
-              document.getElementById(`feedbackText${suffix}`).textContent = data.feedback;
-            }
-          }
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
 
           if (type === "tech") {
+            mediaRecorderTech = mediaRecorder;
+            streamTech = stream;
+          } else {
+            mediaRecorderHR = mediaRecorder;
+            streamHR = stream;
+          }
+
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              audioChunks.push(event.data);
+            }
+          };
+
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+            audioChunks.length = 0; // Clear chunks after creating blob
+
+            const formData = new FormData();
+            formData.append("audio", audioBlob, "response.webm");
+            formData.append("type", type); // Ensure type is sent
+
+            const videoFeed = document.getElementById(`videoFeed${suffix}`);
+            if (videoFeed.srcObject) {
+              const canvas = document.createElement("canvas");
+              canvas.width = videoFeed.videoWidth;
+              canvas.height = videoFeed.videoHeight;
+              const context = canvas.getContext("2d");
+              context.drawImage(videoFeed, 0, 0, canvas.width, canvas.height);
+              const imageData = canvas.toDataURL("image/jpeg").split(",")[1];
+              formData.append("image_data", imageData);
+            }
+
+            console.log(`Submitting response for ${type} interview...`);
+            const response = await fetch("/submit_response", {
+              method: "POST",
+              body: formData,
+            });
+            const data = await response.json();
+
+            if (data.error) {
+              console.error("Error submitting response:", data.error);
+            } else {
+              document.getElementById(`questionText${suffix}`).textContent =
+                data.question;
+              document.getElementById(
+                `audioPlayer${suffix}`
+              ).src = `/static/${data.audio}`;
+              document.getElementById(`audioPlayer${suffix}`).play();
+              if (data.feedback) {
+                document.getElementById(`feedbackText${suffix}`).textContent =
+                  data.feedback;
+              } else {
+                document.getElementById(`feedbackText${suffix}`).textContent =
+                  "";
+              }
+              console.log(
+                `Received new question for ${type}: ${data.question}`
+              );
+              console.log(`Feedback: ${data.feedback || "None"}`);
+            }
+
+            if (type === "tech") {
+              isRecordingTech = false;
+              audioChunksTech = [];
+            } else {
+              isRecordingHR = false;
+              audioChunksHR = [];
+            }
+            document.getElementById(`startRecording${suffix}`).disabled = false;
+            document.getElementById(`stopRecording${suffix}`).disabled = true;
+          };
+
+          mediaRecorder.start();
+          console.log(`Recording started for ${type}...`);
+        } catch (error) {
+          console.error(`Error starting recording for ${type}:`, error);
+          alert(
+            "Could not access the microphone. Please allow microphone permissions."
+          );
+          if (type === "tech") {
             isRecordingTech = false;
-            audioChunksTech = [];
           } else {
             isRecordingHR = false;
-            audioChunksHR = [];
           }
           document.getElementById(`startRecording${suffix}`).disabled = false;
           document.getElementById(`stopRecording${suffix}`).disabled = true;
-        };
-
-        mediaRecorder.start();
-        console.log(`Recording started for ${type}...`);
+        }
       }
 
       function stopRecording(type) {
@@ -443,19 +514,37 @@
         let mediaRecorder, stream, isRecording;
 
         if (type === "tech") {
-          if (!isRecordingTech) return;
+          if (!isRecordingTech) {
+            console.log("No active tech recording to stop.");
+            return;
+          }
           mediaRecorder = mediaRecorderTech;
           stream = streamTech;
-          isRecording = isRecordingTech;
+          isRecordingTech = false;
         } else {
-          if (!isRecordingHR) return;
+          if (!isRecordingHR) {
+            console.log("No active HR recording to stop.");
+            return;
+          }
           mediaRecorder = mediaRecorderHR;
           stream = streamHR;
-          isRecording = isRecordingHR;
+          isRecordingHR = false;
         }
 
-        mediaRecorder.stop();
-        stream.getTracks().forEach((track) => track.stop());
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+          mediaRecorder.stop();
+        }
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+          stream = null;
+        }
+        if (type === "tech") {
+          mediaRecorderTech = null;
+          streamTech = null;
+        } else {
+          mediaRecorderHR = null;
+          streamHR = null;
+        }
         console.log(`Recording stopped for ${type}.`);
       }
 
@@ -466,17 +555,24 @@
         const stopButton = document.getElementById(`stopCamera${suffix}`);
 
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
           videoFeed.srcObject = stream;
-          videoStreamTech = stream;
-          videoStreamHR = stream;
+          if (type === "tech") {
+            videoStreamTech = stream;
+          } else {
+            videoStreamHR = stream;
+          }
           videoFeed.style.display = "block";
           startButton.style.display = "none";
           stopButton.style.display = "inline-block";
-          logger.info(`Camera started for ${type}`);
+          console.log(`Camera started for ${type}`);
         } catch (error) {
-          console.error("Error accessing camera:", error);
-          alert("Could not access the camera. Please allow camera permissions.");
+          console.error(`Error accessing camera for ${type}:`, error);
+          alert(
+            "Could not access the camera. Please allow camera permissions."
+          );
         }
       }
 
@@ -486,42 +582,71 @@
         const startButton = document.getElementById(`startCamera${suffix}`);
         const stopButton = document.getElementById(`stopCamera${suffix}`);
 
+        let videoStream = type === "tech" ? videoStreamTech : videoStreamHR;
+
         if (videoFeed.srcObject) {
           videoFeed.srcObject.getTracks().forEach((track) => track.stop());
           videoFeed.srcObject = null;
           videoFeed.style.display = "none";
           startButton.style.display = "inline-block";
           stopButton.style.display = "none";
-          logger.info(`Camera stopped for ${type}`);
+          if (type === "tech") {
+            videoStreamTech = null;
+          } else {
+            videoStreamHR = null;
+          }
+          console.log(`Camera stopped for ${type}`);
         }
       }
 
       // Resume Upload
-      document.getElementById("resumeForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const formData = new FormData();
-        const fileInput = document.getElementById("resumeFile");
-        if (!fileInput.files.length) {
-          document.getElementById("skillsOutput").textContent = "Please select a file.";
-          return;
-        }
-        formData.append("file", fileInput.files[0]);
-        
-        try {
-          const response = await fetch("/upload_resume", {
-            method: "POST",
-            body: formData,
-          });
-          const data = await response.json();
-          if (data.error) {
-            document.getElementById("skillsOutput").textContent = `Error: ${data.error}`;
-          } else {
-            document.getElementById("skillsOutput").textContent = `Skills: ${data.skills.join(", ")}`;
+      document
+        .getElementById("resumeForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const formData = new FormData();
+          const fileInput = document.getElementById("resumeFile");
+          if (!fileInput.files.length) {
+            document.getElementById("skillsOutput").textContent =
+              "Please select a file.";
+            return;
           }
-        } catch (error) {
-          console.error("Error uploading resume:", error);
-          document.getElementById("skillsOutput").textContent = "Error uploading resume.";
-        }
+          formData.append("file", fileInput.files[0]);
+
+          try {
+            const response = await fetch("/upload_resume", {
+              method: "POST",
+              body: formData,
+            });
+            const data = await response.json();
+            if (data.error) {
+              document.getElementById(
+                "skillsOutput"
+              ).textContent = `Error: ${data.error}`;
+            } else {
+              document.getElementById(
+                "skillsOutput"
+              ).textContent = `Skills: ${data.skills.join(", ")}`;
+            }
+          } catch (error) {
+            console.error("Error uploading resume:", error);
+            document.getElementById("skillsOutput").textContent =
+              "Error uploading resume.";
+          }
+        });
+
+      // Reset state when navigating away
+      $(".nav-link, .close").on("click", function () {
+        stopRecording("tech");
+        stopRecording("hr");
+        stopCamera("tech");
+        stopCamera("hr");
+        document.getElementById("questionTextTech").textContent = "";
+        document.getElementById("questionTextHR").textContent = "";
+        document.getElementById("feedbackTextTech").textContent = "";
+        document.getElementById("feedbackTextHR").textContent = "";
+        document.getElementById("audioPlayerTech").src = "";
+        document.getElementById("audioPlayerHR").src = "";
       });
     </script>
   </body>
