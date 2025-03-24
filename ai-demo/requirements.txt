@@ -5,3 +5,10 @@ speechrecognition
 numpy
 librosa
 vaderSentiment
+deepface
+pydub
+opencv-python
+PyPDF2
+python-docx
+spacy
+elevenlabs

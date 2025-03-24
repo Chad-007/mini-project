@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Interview System | CyberVerse</title>
+    <title>CyberVerse AI Interview | Dimension</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=no"
+    />
     <!-- Google Fonts -->
     <link
       href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,300;0,600;1,300;1,600&display=swap"
@@ -11,8 +14,11 @@
     />
     <!-- Font Awesome -->
     <link rel="stylesheet" href="/static/css/fontawesome-all.min.css" />
-    <!-- Custom CSS -->
+    <!-- HTML5UP Dimension Template CSS (merged with your custom overrides) -->
     <link rel="stylesheet" href="/static/css/dimension-custom.css" />
+    <noscript>
+      <link rel="stylesheet" href="/static/css/noscript.css" />
+    </noscript>
     <style>
       /* Temporary styles for video feed */
       #videoFeedTech,
@@ -24,51 +30,92 @@
       .video-container {
         text-align: center;
       }
-      /* Warning modal styles */
-      #warningModal {
-        display: none; /* Hidden by default */
-        position: fixed;
+
+      /* Dimension-inspired transitions and animations */
+      #bg:after {
+        filter: none;
+        transition: filter 0.5s ease-in-out;
+      }
+      body.is-article-visible #bg:after {
+        filter: blur(1rem);
+      }
+      body.is-preload #bg:before {
+        background-color: transparent;
+      }
+      #main {
+        position: relative;
+        width: 100%;
+        max-width: 40rem;
+        margin: 0 auto;
+      }
+      #main article {
+        position: absolute;
         top: 0;
         left: 0;
         width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        color: #fff;
-        z-index: 9999;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
+        opacity: 0;
+        transition: all 0.8s ease-in-out;
+        transform: none;
       }
-      #warningModalContent {
-        text-align: center;
+      /* Initial disordered state from Dimension */
+      body.is-preload #main article {
+        opacity: 0;
       }
-      #warningModal button {
-        margin-top: 1rem;
-        padding: 0.5rem 1rem;
-        font-size: 1rem;
+      body.is-preload #tech {
+        transform: translate(-100px, -50px) rotate(10deg);
+      }
+      body.is-preload #hr {
+        transform: translate(150px, 100px) rotate(-15deg);
+      }
+      body.is-preload #resume {
+        transform: translate(-80px, 200px) rotate(20deg);
+      }
+      body.is-preload #about {
+        transform: translate(120px, -150px) rotate(-10deg);
+      }
+      body.is-preload #home {
+        transform: translate(0, 0);
+        opacity: 1;
+      }
+      /* Active state */
+      #main article.active {
+        opacity: 1;
+        transform: translate(0, 0) rotate(0deg);
+        z-index: 2;
+      }
+      body.is-preload #header,
+      body.is-preload #footer {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      body:not(.is-preload) #header,
+      body:not(.is-preload) #footer {
+        opacity: 1;
+        transform: translateY(0);
+        transition: all 0.5s ease-in-out;
       }
     </style>
   </head>
   <body class="is-preload">
-    <!-- Warning modal overlay -->
-    <div id="warningModal">
-      <div id="warningModalContent">
-        <p>Interview Paused. Do not switch tabs or exit full screen.</p>
-        <button onclick="resumeInterview()">Resume Interview</button>
-      </div>
-    </div>
-
-    <!-- Background -->
+    <!-- Background (from Dimension template) -->
     <div id="bg"></div>
 
     <!-- Wrapper -->
     <div id="wrapper">
-      <!-- Header -->
+      <!-- Single Header (from Dimension template) -->
       <header id="header">
-        <h1><a href="#">CyberVerse AI Interview</a></h1>
+        <div class="logo">
+          <span class="icon fa-gem"></span>
+        </div>
+        <div class="content">
+          <div class="inner">
+            <h1><a href="#">CyberVerse AI Interview</a></h1>
+            <p>Advanced AI-powered interview preparation system</p>
+          </div>
+        </div>
         <nav>
           <ul>
-            <li><a href="#home" class="nav-link active">Home</a></li>
+            <li><a href="#home" class="nav-link">Home</a></li>
             <li><a href="#tech" class="nav-link">Tech Interview</a></li>
             <li><a href="#hr" class="nav-link">HR Interview</a></li>
             <li><a href="#resume" class="nav-link">Upload Resume</a></li>
@@ -77,10 +124,10 @@
         </nav>
       </header>
 
-      <!-- Main -->
+      <!-- Main Content Area -->
       <div id="main">
-        <!-- Home Section -->
-        <article id="home" class="active">
+        <!-- Home Section (no active class initially) -->
+        <article id="home">
           <div class="content">
             <header>
               <h2>Welcome to CyberVerse AI</h2>
@@ -90,7 +137,7 @@
               <div class="box">
                 <p>
                   The CyberVerse AI Interview System leverages cutting-edge
-                  technology to help you prepare for technical and HR
+                  technology to help you prepare for both technical and HR
                   interviews. Experience a futuristic interface with real-time
                   feedback, audio responses, and facial emotion analysis.
                 </p>
@@ -273,19 +320,19 @@
                 </p>
                 <ul class="icons">
                   <li>
-                    <a href="#" class="icon brands fa-twitter">
-                      <span class="label">Twitter</span>
-                    </a>
+                    <a href="#" class="icon brands fa-twitter"
+                      ><span class="label">Twitter</span></a
+                    >
                   </li>
                   <li>
-                    <a href="#" class="icon brands fa-github">
-                      <span class="label">GitHub</span>
-                    </a>
+                    <a href="#" class="icon brands fa-github"
+                      ><span class="label">GitHub</span></a
+                    >
                   </li>
                   <li>
-                    <a href="#" class="icon brands fa-linkedin">
-                      <span class="label">LinkedIn</span>
-                    </a>
+                    <a href="#" class="icon brands fa-linkedin"
+                      ><span class="label">LinkedIn</span></a
+                    >
                   </li>
                 </ul>
               </div>
@@ -302,6 +349,11 @@
     </div>
 
     <!-- Scripts -->
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/browser.min.js"></script>
+    <script src="/static/js/breakpoints.min.js"></script>
+    <script src="/static/js/util.js"></script>
+    <script src="/static/js/dimension-functions.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
       // Fullscreen helper functions
@@ -317,7 +369,6 @@
           elem.msRequestFullscreen();
         }
       }
-
       function exitFullScreen() {
         if (document.exitFullscreen) {
           document.exitFullscreen();
@@ -330,91 +381,42 @@
         }
       }
 
-      // Listen for changes in fullscreen mode
-      document.addEventListener("fullscreenchange", function () {
-        if (!document.fullscreenElement) {
-          // If fullscreen mode was exited during an interview
-          pauseInterview();
-          showWarningModal();
-        }
-      });
-
-      // Warn when switching tabs (still a warning only)
-      document.addEventListener("visibilitychange", function () {
-        if (document.hidden) {
-          alert("Switching tabs is not allowed during the assessment.");
-        }
-      });
-
-      // Listen for ESC key events to pause the interview and exit fullscreen
-      document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape") {
-          exitFullScreen();
-          pauseInterview();
-          showWarningModal();
-          e.preventDefault();
-        }
-      });
+      // Removed visibilitychange and ESC key warning events
 
       function pauseInterview() {
-        // Stop recordings and cameras
         stopRecording("tech");
         stopRecording("hr");
         stopCamera("tech");
         stopCamera("hr");
-        // Pause any playing audio
         document.getElementById("audioPlayerTech").pause();
         document.getElementById("audioPlayerHR").pause();
       }
 
-      function showWarningModal() {
-        document.getElementById("warningModal").style.display = "flex";
-      }
-
-      function resumeInterview() {
-        document.getElementById("warningModal").style.display = "none";
-        // Optionally, restart any paused components if needed
-      }
-
-      // Navigation interactivity
       $(document).ready(function () {
         $(".nav-link").on("click", function (e) {
           e.preventDefault();
           const target = $(this).attr("href").substring(1);
           $("#main article").removeClass("active");
+          // Open target section immediately
           $(`#${target}`).addClass("active");
           $("#header nav ul li a").removeClass("active");
           $(this).addClass("active");
-          $("html, body").animate(
-            {
-              scrollTop:
-                $(`#${target}`).offset().top - $("#header").outerHeight(),
-            },
-            500
-          );
-          if (target !== "home") {
-            $("body").addClass("is-article-visible");
-          } else {
-            $("body").removeClass("is-article-visible");
-          }
+          window.scrollTo(0, 0);
         });
+
         $(".close").on("click", function () {
           $("#main article").removeClass("active");
-          $("body").removeClass("is-article-visible");
           $("#header nav ul li a").removeClass("active");
-          $('#header nav ul li a[href="#home"]').addClass("active");
-          $("#home").addClass("active");
-          $("html, body").animate(
-            {
-              scrollTop: $("#home").offset().top - $("#header").outerHeight(),
-            },
-            500
-          );
+          window.scrollTo(0, 0);
         });
-        $(".is-preload").removeClass("is-preload");
+
+        // Remove preload class after initial animation
+        setTimeout(() => {
+          $("body").removeClass("is-preload");
+        }, 100);
       });
 
-      // Interview and Camera Functionality
+      // Interview & Camera functionality code
       let mediaRecorderTech = null,
         mediaRecorderHR = null;
       let audioChunksTech = [],
@@ -426,7 +428,6 @@
       let videoStreamTech = null,
         videoStreamHR = null;
 
-      // Tech Interview
       document
         .getElementById("startInterviewTech")
         .addEventListener("click", () => {
@@ -446,7 +447,6 @@
         .getElementById("stopCameraTech")
         .addEventListener("click", () => stopCamera("tech"));
 
-      // HR Interview
       document
         .getElementById("startInterviewHR")
         .addEventListener("click", () => {
@@ -467,17 +467,13 @@
         .addEventListener("click", () => stopCamera("hr"));
 
       async function startInterview(type) {
-        console.log(`Starting ${type} interview...`);
         const response = await fetch("/start_interview", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type: type }),
         });
         const data = await response.json();
-        if (data.error) {
-          console.error("Error starting interview:", data.error);
-          return;
-        }
+        if (data.error) return console.error("Error:", data.error);
         const suffix = type === "tech" ? "Tech" : "HR";
         document.getElementById(`questionText${suffix}`).textContent =
           data.question;
@@ -486,24 +482,17 @@
         ).src = `/static/${data.audio}`;
         document.getElementById(`audioPlayer${suffix}`).play();
         document.getElementById(`feedbackText${suffix}`).textContent = "";
-        console.log(`Started ${type} interview, question: ${data.question}`);
       }
 
       async function startRecording(type) {
         const suffix = type === "tech" ? "Tech" : "HR";
         let mediaRecorder, audioChunks, stream;
         if (type === "tech") {
-          if (isRecordingTech) {
-            console.log("Tech recording already in progress.");
-            return;
-          }
+          if (isRecordingTech) return;
           isRecordingTech = true;
           audioChunks = audioChunksTech;
         } else {
-          if (isRecordingHR) {
-            console.log("HR recording already in progress.");
-            return;
-          }
+          if (isRecordingHR) return;
           isRecordingHR = true;
           audioChunks = audioChunksHR;
         }
@@ -520,9 +509,7 @@
             streamHR = stream;
           }
           mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-              audioChunks.push(event.data);
-            }
+            if (event.data.size > 0) audioChunks.push(event.data);
           };
           mediaRecorder.onstop = async () => {
             const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
@@ -540,15 +527,13 @@
               const imageData = canvas.toDataURL("image/jpeg").split(",")[1];
               formData.append("image_data", imageData);
             }
-            console.log(`Submitting response for ${type} interview...`);
             const response = await fetch("/submit_response", {
               method: "POST",
               body: formData,
             });
             const data = await response.json();
-            if (data.error) {
-              console.error("Error submitting response:", data.error);
-            } else {
+            if (data.error) console.error("Error:", data.error);
+            else {
               document.getElementById(`questionText${suffix}`).textContent =
                 data.question;
               document.getElementById(
@@ -557,30 +542,18 @@
               document.getElementById(`audioPlayer${suffix}`).play();
               document.getElementById(`feedbackText${suffix}`).textContent =
                 data.feedback || "";
-              console.log(
-                `Received new question for ${type}: ${data.question}`
-              );
             }
-            if (type === "tech") {
-              isRecordingTech = false;
-            } else {
-              isRecordingHR = false;
-            }
+            if (type === "tech") isRecordingTech = false;
+            else isRecordingHR = false;
             document.getElementById(`startRecording${suffix}`).disabled = false;
             document.getElementById(`stopRecording${suffix}`).disabled = true;
           };
           mediaRecorder.start();
-          console.log(`Recording started for ${type}...`);
         } catch (error) {
           console.error(`Error starting recording for ${type}:`, error);
-          alert(
-            "Could not access the microphone. Please allow microphone permissions."
-          );
-          if (type === "tech") {
-            isRecordingTech = false;
-          } else {
-            isRecordingHR = false;
-          }
+          alert("Could not access microphone. Please allow permissions.");
+          if (type === "tech") isRecordingTech = false;
+          else isRecordingHR = false;
           document.getElementById(`startRecording${suffix}`).disabled = false;
           document.getElementById(`stopRecording${suffix}`).disabled = true;
         }
@@ -590,25 +563,18 @@
         const suffix = type === "tech" ? "Tech" : "HR";
         let mediaRecorder, stream;
         if (type === "tech") {
-          if (!isRecordingTech) {
-            console.log("No active tech recording to stop.");
-            return;
-          }
+          if (!isRecordingTech) return;
           mediaRecorder = mediaRecorderTech;
           stream = streamTech;
           isRecordingTech = false;
         } else {
-          if (!isRecordingHR) {
-            console.log("No active HR recording to stop.");
-            return;
-          }
+          if (!isRecordingHR) return;
           mediaRecorder = mediaRecorderHR;
           stream = streamHR;
           isRecordingHR = false;
         }
-        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        if (mediaRecorder && mediaRecorder.state !== "inactive")
           mediaRecorder.stop();
-        }
         if (stream) {
           stream.getTracks().forEach((track) => track.stop());
           stream = null;
@@ -620,7 +586,6 @@
           mediaRecorderHR = null;
           streamHR = null;
         }
-        console.log(`Recording stopped for ${type}.`);
       }
 
       async function startCamera(type) {
@@ -633,20 +598,14 @@
             video: true,
           });
           videoFeed.srcObject = stream;
-          if (type === "tech") {
-            videoStreamTech = stream;
-          } else {
-            videoStreamHR = stream;
-          }
+          if (type === "tech") videoStreamTech = stream;
+          else videoStreamHR = stream;
           videoFeed.style.display = "block";
           startButton.style.display = "none";
           stopButton.style.display = "inline-block";
-          console.log(`Camera started for ${type}`);
         } catch (error) {
           console.error(`Error accessing camera for ${type}:`, error);
-          alert(
-            "Could not access the camera. Please allow camera permissions."
-          );
+          alert("Could not access camera. Please allow permissions.");
         }
       }
 
@@ -662,16 +621,11 @@
           videoFeed.style.display = "none";
           startButton.style.display = "inline-block";
           stopButton.style.display = "none";
-          if (type === "tech") {
-            videoStreamTech = null;
-          } else {
-            videoStreamHR = null;
-          }
-          console.log(`Camera stopped for ${type}`);
+          if (type === "tech") videoStreamTech = null;
+          else videoStreamHR = null;
         }
       }
 
-      // Resume Upload
       document
         .getElementById("resumeForm")
         .addEventListener("submit", async (e) => {
@@ -706,7 +660,6 @@
           }
         });
 
-      // Reset state when navigating away
       $(".nav-link, .close").on("click", function () {
         stopRecording("tech");
         stopRecording("hr");
