@@ -27,7 +27,7 @@ app = Flask(__name__, static_url_path='/static', static_folder='static')
 genai.configure(api_key="AIzaSyAU3lqb-xlubVzrTyDslPaxX_tmUD1i_eo")
 
 # Configure ElevenLabs API
-client = ElevenLabs(api_key="sk_9a801180ead9b45b91141854dc885998546c653d20edf5e0")
+client = ElevenLabs(api_key="()sk_ca92f6843b635d499e0cc88faeb59178871e0b55babeba7c")
 
 # List available models and select one
 def get_available_model():
@@ -51,10 +51,15 @@ model = get_available_model()
 analyzer = SentimentIntensityAnalyzer()
 nlp = spacy.load("en_core_web_sm")
 
-# Store conversation history, current interview type, and extracted skills
+# Global variables for conversation, interview type and tech score
 conversation_history = []
 current_interview_type = None
 extracted_skills = []  # Global to store resume skills
+
+# For tech interview scoring
+tech_question_count = 0
+tech_score = 0
+MAX_TECH_QUESTIONS = 10
 
 # List of HR questions to cycle through
 hr_questions = [
@@ -70,6 +75,25 @@ hr_questions = [
 
 # Counter to track the current HR question index
 hr_question_index = 0
+
+# Function to evaluate a tech response (liberal marking: answer must not be one word)
+def gemini_mark_answer(answer_text):
+    """
+    Ask Gemini to mark the candidate's technical answer on a scale from 0.0 to 1.0.
+    The prompt instructs it to return only a number (e.g., 0.75).
+    In case of failure, falls back to the local evaluate_response.
+    """
+    try:
+        prompt = (f"Mark the following technical answer on a scale from 0.0 to 1.0 for "
+                  f"accuracy and relevance: '{answer_text}'. Return only the mark as a floating point number (for example, 0.75).")
+        response_obj = model.generate_content(prompt)
+        mark_str = response_obj.text.strip().split()[0]  # Expecting the first token is the mark
+        mark = float(mark_str)
+        return mark
+    except Exception as e:
+        logger.error(f"Error in marking answer with Gemini: {e}")
+        # If Gemini fails, fall back to the local evaluator.
+        return evaluate_response(answer_text)
 
 # Function to detect facial emotion using DeepFace
 def detect_emotion(frame):
@@ -114,7 +138,7 @@ def capture_frame(image_data):
 
 # Generate technical question based on extracted skills and conversation history
 def generate_tech_question(response=None):
-    global extracted_skills, conversation_history
+    global extracted_skills, conversation_history, tech_question_count
     if not model:
         logger.warning("Model not initialized, using fallback question")
         return "What is the difference between a list and a tuple in Python?"
@@ -124,17 +148,17 @@ def generate_tech_question(response=None):
             skill = random.choice(extracted_skills)
             if not response:
                 prompt = (f"Given the conversation context:\n{context}\n"
-                          f"Ask only a basic-level technical interview question about {skill}.")
+                          f"Ask a basic technical interview question about {skill} that requires more than a one-word answer.")
             else:
                 prompt = (f"Given the conversation context:\n{context}\n"
-                          f"Based on the response: '{response}', ask only a basic follow-up technical question about {skill}.")
+                          f"Based on the response: '{response}', ask a follow-up technical question about {skill} that builds on the previous answer.")
         else:
             if not response:
                 prompt = (f"Given the conversation context:\n{context}\n"
-                          "Ask only a beginner-level technical interview question about Python.")
+                          "Ask a basic technical interview question about Python that requires more than a one-word answer.")
             else:
                 prompt = (f"Given the conversation context:\n{context}\n"
-                          "Based on the response: '{response}', ask only a follow-up technical question about Python.")
+                          "Based on the response: '{response}', ask a follow-up technical question about Python that builds on the previous answer. only the follow up question but nothning else dont show me your thinking")
         response_obj = model.generate_content(prompt)
         question = response_obj.text
         logger.info(f"Generated tech question: {question}")
@@ -150,7 +174,7 @@ def generate_hr_question():
     try:
         if len(conversation_history) > 1:
             prompt = (f"Given the conversation context:\n{context}\n"
-                      "Ask only a follow-up HR interview question.")
+                      "Ask a follow-up HR interview question.")
             response_obj = model.generate_content(prompt)
             question = response_obj.text
         else:
@@ -316,7 +340,7 @@ def index():
 
 @app.route('/start_interview', methods=['POST'])
 def start_interview():
-    global conversation_history, current_interview_type, extracted_skills, hr_question_index
+    global conversation_history, current_interview_type, tech_question_count, tech_score, hr_question_index
     try:
         interview_type = request.json.get('type')
         if not interview_type:
@@ -326,9 +350,9 @@ def start_interview():
         conversation_history = []
         current_interview_type = interview_type
         hr_question_index = 0
-        logger.info(f"Starting interview with type: {current_interview_type}")
-
         if interview_type == "tech":
+            tech_question_count = 0
+            tech_score = 0
             question = generate_tech_question()
         else:
             question = generate_hr_question()
@@ -346,19 +370,18 @@ def start_interview():
 
 @app.route('/submit_response', methods=['POST'])
 def submit_response():
-    global conversation_history, current_interview_type, extracted_skills
+    global conversation_history, current_interview_type, extracted_skills, tech_question_count, tech_score
     try:
         interview_type = request.form.get('type') or current_interview_type
         if not interview_type:
             logger.error("Interview type not provided and current_interview_type is None")
             return jsonify({"error": "Interview type not provided"}), 400
 
-        logger.info(f"Processing response for interview type: {interview_type}, current_interview_type: {current_interview_type}")
+        logger.info(f"Processing response for interview type: {interview_type}")
 
         if 'audio' not in request.files:
             logger.error("No audio file provided")
             return jsonify({"error": "No audio file provided"}), 400
-
         audio_file = request.files['audio']
         if audio_file.filename == '':
             logger.error("No selected file")
@@ -386,6 +409,12 @@ def submit_response():
         
         conversation_history.append({"role": "user", "text": response_text})
         
+        # Evaluate tech answer if applicable
+        if interview_type == "tech":
+            mark = gemini_mark_answer(response_text)
+            tech_score += mark
+            tech_question_count += 1
+        
         image_data = request.form.get('image_data')
         if image_data:
             frame = capture_frame(image_data)
@@ -396,9 +425,15 @@ def submit_response():
                         logger.info(f"Detected emotions: {emotions}, Dominant Emotion: {dominant_emotion}")
                 except Exception as e:
                     logger.error(f"Error processing facial emotions: {e}")
-            next_question = generate_tech_question(response_text) if interview_type == "tech" else generate_hr_question()
+        
+        # If tech interview reached MAX_TECH_QUESTIONS, finish interview
+        if interview_type == "tech" and tech_question_count >= MAX_TECH_QUESTIONS:
+            final_message = f"Tech Interview Completed. Your score is {tech_score} out of {MAX_TECH_QUESTIONS}."
+            audio_file = text_to_speech(final_message)
+            conversation_history.append({"role": "interviewer", "text": final_message})
+            logger.info(f"Tech interview completed. Score: {tech_score}/{MAX_TECH_QUESTIONS}")
+            return jsonify({"question": final_message, "audio": audio_file})
         else:
-            # For this update, we ignore any additional feedback and ask only the next question.
             if interview_type == "tech":
                 next_question = generate_tech_question(response_text)
             else:
@@ -437,6 +472,12 @@ def upload_resume():
     except Exception as e:
         logger.error(f"Error in upload_resume: {e}")
         return jsonify({"error": str(e)}), 400
+
+# New route to serve candidate profile for tech score
+@app.route('/profile', methods=['GET'])
+def profile():
+    global tech_score, MAX_TECH_QUESTIONS
+    return jsonify({"score": tech_score, "max_score": MAX_TECH_QUESTIONS})
 
 if __name__ == '__main__':
     app.run(debug=True)

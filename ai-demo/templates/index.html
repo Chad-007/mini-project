@@ -73,7 +73,8 @@
       body.is-preload #about {
         transform: translate(120px, -150px) rotate(-10deg);
       }
-      body.is-preload #home {
+      body.is-preload #home,
+      body.is-preload #profile {
         transform: translate(0, 0);
         opacity: 1;
       }
@@ -120,13 +121,14 @@
             <li><a href="#hr" class="nav-link">HR Interview</a></li>
             <li><a href="#resume" class="nav-link">Upload Resume</a></li>
             <li><a href="#about" class="nav-link">About</a></li>
+            <li><a href="#profile" class="nav-link">Profile</a></li>
           </ul>
         </nav>
       </header>
 
       <!-- Main Content Area -->
       <div id="main">
-        <!-- Home Section (no active class initially) -->
+        <!-- Home Section -->
         <article id="home">
           <div class="content">
             <header>
@@ -164,7 +166,10 @@
           <div class="content">
             <header>
               <h2>Tech Interview</h2>
-              <p>Test your technical skills with AI-driven questions.</p>
+              <p>
+                Test your technical skills with AI-driven questions. Answer 10
+                detailed questions to build your profile.
+              </p>
             </header>
             <div class="inner">
               <div class="box">
@@ -340,6 +345,23 @@
           </div>
           <span class="close"></span>
         </article>
+
+        <!-- Profile Section -->
+        <article id="profile">
+          <div class="content">
+            <header>
+              <h2>Profile</h2>
+              <p>Your Technical Interview Score</p>
+            </header>
+            <div class="inner">
+              <div class="box">
+                <p id="profileScore">Score: 0/10</p>
+                <button id="loadProfile" class="button">Load Profile</button>
+              </div>
+            </div>
+          </div>
+          <span class="close"></span>
+        </article>
       </div>
 
       <!-- Footer -->
@@ -381,7 +403,7 @@
         }
       }
 
-      // Removed visibilitychange and ESC key warning events
+      // Removed unnecessary visibility change and ESC key handlers
 
       function pauseInterview() {
         stopRecording("tech");
@@ -414,6 +436,21 @@
         setTimeout(() => {
           $("body").removeClass("is-preload");
         }, 100);
+
+        // Load profile score when "Load Profile" button is clicked
+        $("#loadProfile").on("click", function () {
+          // Example API call to fetch profile data; adjust the endpoint as needed.
+          $.ajax({
+            url: "/profile",
+            method: "GET",
+            success: function (data) {
+              $("#profileScore").text(`Score: ${data.score}/10`);
+            },
+            error: function (err) {
+              $("#profileScore").text("Error loading profile.");
+            },
+          });
+        });
       });
 
       // Interview & Camera functionality code
