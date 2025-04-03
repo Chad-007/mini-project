@@ -30,7 +30,6 @@
       .video-container {
         text-align: center;
       }
-
       /* Dimension-inspired transitions and animations */
       #bg:after {
         filter: none;
@@ -222,7 +221,6 @@
         </article>
 
         <!-- HR Interview Section -->
-        <!-- HR Interview Section -->
         <article id="hr">
           <div class="content">
             <header>
@@ -365,7 +363,7 @@
           <span class="close"></span>
         </article>
 
-        <!-- Profile Section (Updated) -->
+        <!-- Profile Section -->
         <article id="profile">
           <div class="content">
             <header>
@@ -560,21 +558,38 @@
         .addEventListener("click", () => stopCamera("hr"));
 
       async function startInterview(type) {
-        const response = await fetch("/start_interview", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: type }),
-        });
-        const data = await response.json();
-        if (data.error) return console.error("Error:", data.error);
         const suffix = type === "tech" ? "Tech" : "HR";
-        document.getElementById(`questionText${suffix}`).textContent =
-          data.question;
-        document.getElementById(
-          `audioPlayer${suffix}`
-        ).src = `/static/${data.audio}`;
-        document.getElementById(`audioPlayer${suffix}`).play();
-        document.getElementById(`feedbackText${suffix}`).textContent = "";
+        try {
+          const response = await fetch("/start_interview", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: type }),
+          });
+          const data = await response.json();
+          console.log(`Start Interview (${type}):`, data); // Debug log
+          if (data.error) {
+            console.error("Error:", data.error);
+            document.getElementById(
+              `feedbackText${suffix}`
+            ).textContent = `Error: ${data.error}`;
+          } else {
+            document.getElementById(`questionText${suffix}`).textContent =
+              data.question;
+            if (data.audio) {
+              document.getElementById(
+                `audioPlayer${suffix}`
+              ).src = `/static/${data.audio}`;
+              document.getElementById(`audioPlayer${suffix}`).play();
+            } else {
+              console.warn("No audio in response");
+            }
+            document.getElementById(`feedbackText${suffix}`).textContent = "";
+          }
+        } catch (error) {
+          console.error(`Error starting ${type} interview:`, error);
+          document.getElementById(`feedbackText${suffix}`).textContent =
+            "Error starting interview.";
+        }
       }
 
       async function startRecording(type) {
@@ -620,33 +635,47 @@
               const imageData = canvas.toDataURL("image/jpeg").split(",")[1];
               formData.append("image_data", imageData);
             }
-            const response = await fetch("/submit_response", {
-              method: "POST",
-              body: formData,
-            });
-            const data = await response.json();
-            if (data.error) console.error("Error:", data.error);
-            else {
-              document.getElementById(`questionText${suffix}`).textContent =
-                data.question;
-              if (data.audio) {
+            try {
+              const response = await fetch("/submit_response", {
+                method: "POST",
+                body: formData,
+              });
+              const data = await response.json();
+              console.log(`Submit Response (${type}):`, data); // Debug log
+              if (data.error) {
+                console.error("Error:", data.error);
                 document.getElementById(
-                  `audioPlayer${suffix}`
-                ).src = `/static/${data.audio}`;
-                document.getElementById(`audioPlayer${suffix}`).play();
+                  `feedbackText${suffix}`
+                ).textContent = `Error: ${data.error}`;
+              } else {
+                document.getElementById(`questionText${suffix}`).textContent =
+                  data.question;
+                if (data.audio) {
+                  document.getElementById(
+                    `audioPlayer${suffix}`
+                  ).src = `/static/${data.audio}`;
+                  document.getElementById(`audioPlayer${suffix}`).play();
+                } else {
+                  console.warn("No audio in response");
+                }
+                document.getElementById(`feedbackText${suffix}`).textContent =
+                  data.feedback || "";
+                if (type === "hr" && data.emotions) {
+                  const emotionsStr = Object.entries(data.emotions)
+                    .map(
+                      ([emotion, value]) => `${emotion}: ${value.toFixed(2)}`
+                    )
+                    .join(", ");
+                  document.getElementById("emotionsHR").textContent =
+                    emotionsStr || "None detected";
+                  document.getElementById("dominantEmotionHR").textContent =
+                    data.dominant_emotion || "None";
+                }
               }
+            } catch (error) {
+              console.error(`Error submitting ${type} response:`, error);
               document.getElementById(`feedbackText${suffix}`).textContent =
-                data.feedback || "";
-              // Display emotions for HR
-              if (type === "hr" && data.emotions) {
-                const emotionsStr = Object.entries(data.emotions)
-                  .map(([emotion, value]) => `${emotion}: ${value.toFixed(2)}`)
-                  .join(", ");
-                document.getElementById("emotionsHR").textContent =
-                  emotionsStr || "None detected";
-                document.getElementById("dominantEmotionHR").textContent =
-                  data.dominant_emotion || "None";
-              }
+                "Error submitting response.";
             }
             if (type === "tech") isRecordingTech = false;
             else isRecordingHR = false;
@@ -778,6 +807,7 @@
         document.getElementById("audioPlayerHR").src = "";
       });
     </script>
+    <!-- Optional Cloudflare script (unchanged) -->
     <script>
       (function () {
         function c() {

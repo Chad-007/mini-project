@@ -24,9 +24,9 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 # Configure APIs
-GOOGLE_API_KEY = "AIzaSyAU3lqb-xlubVzrTyDslPaxX_tmUD1i_eo"  # Replace with your Google Cloud API key
+GOOGLE_API_KEY = "AIzaSyAU3lqb-xlubVzrTyDslPaxX_tmUD1i_eo"  # Replace with your valid Google Cloud API key
 genai.configure(api_key=GOOGLE_API_KEY)
-ELEVENLABS_API_KEY = "YOUR_ELEVENLABS_API_KEY"  # Replace with your ElevenLabs API key
+ELEVENLABS_API_KEY = "YOUR_ELEVENLABS_API_KEY"  # Replace with your valid ElevenLabs API key
 client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 
 # Model selection
@@ -97,8 +97,7 @@ def gemini_mark_hr_answer(answer_text):
 def gemini_mark_answer(answer_text):
     try:
         prompt = (f"Mark the following technical answer on a scale from 0.0 to 1.0 for "
-                  f"accuracy and relevance: '{answer_text}'. Return only the mark as a floating point number (for example, 0.75)."
-                  f"give some marks even if the answer is not perfect"                  )
+                  f"accuracy and relevance: '{answer_text}'. Return only the mark as a floating point number (for example, 0.75).")
         response_obj = model.generate_content(prompt)
         mark = float(response_obj.text.strip().split()[0])
         return mark
@@ -106,12 +105,12 @@ def gemini_mark_answer(answer_text):
         logger.error(f"Error in marking answer with Gemini: {e}")
         return 0.5
 
-# Emotion detection with improved logging
+# Emotion detection with float32 conversion
 def detect_emotion(frame):
     try:
         result = DeepFace.analyze(frame, actions=['emotion'], enforce_detection=False)
         if result and isinstance(result, list) and len(result) > 0:
-            emotions = result[0]['emotion']
+            emotions = {k: float(v) for k, v in result[0]['emotion'].items()}  # Convert float32 to float
             dominant_emotion = result[0]['dominant_emotion']
             logger.info(f"Detected emotions: {emotions}, Dominant: {dominant_emotion}")
             return emotions, dominant_emotion
@@ -154,13 +153,10 @@ def generate_tech_question(response=None):
             skill = random.choice(extracted_skills)
             if not response:
                 prompt = (f"Given the conversation context:\n{context}\n"
-                          f"Ask a basic technical interview question about {skill} that requires more than a one-word answer."
-                          f"Ask small and basic question that it not  that hard and make the question length small")
+                          f"Ask a basic technical interview question about {skill} that requires more than a one-word answer.")
             else:
                 prompt = (f"Given the conversation context:\n{context}\n"
-                          f"Based on the response: '{response}', ask a follow-up technical question about {skill} that builds on the previous answer. also tell me about my answer"
-                          f"dont show me your thinnking much like dont say the follow up should be etc.."
-                          )
+                          f"Based on the response: '{response}', ask a follow-up technical question about {skill} that builds on the previous answer.")
         else:
             if not response:
                 prompt = (f"Given the conversation context:\n{context}\n"
@@ -365,10 +361,11 @@ def start_interview():
         audio_file = text_to_speech(question)
         if not audio_file:
             logger.warning("Audio generation failed, proceeding without audio")
-            return jsonify({"question": question, "audio": None})
 
         conversation_history.append({"role": "interviewer", "text": question})
-        return jsonify({"question": question, "audio": audio_file})
+        response = {"question": question, "audio": audio_file or None}
+        logger.info(f"Start interview response: {response}")
+        return jsonify(response)
     except Exception as e:
         logger.error(f"Error in start_interview: {e}")
         return jsonify({"error": str(e)}), 500
@@ -425,8 +422,12 @@ def submit_response():
                 final_message = f"Tech Interview Completed. Your score is {tech_score} out of {MAX_TECH_QUESTIONS}."
                 audio_file = text_to_speech(final_message)
                 conversation_history.append({"role": "interviewer", "text": final_message})
-                return jsonify({"question": final_message, "audio": audio_file or None})
-            next_question = generate_tech_question(response_text)
+                response = {"question": final_message, "audio": audio_file or None}
+            else:
+                next_question = generate_tech_question(response_text)
+                audio_file = text_to_speech(next_question)
+                conversation_history.append({"role": "interviewer", "text": next_question})
+                response = {"question": next_question, "audio": audio_file or None}
         else:  # HR interview
             mark = gemini_mark_hr_answer(response_text)
             hr_score += mark
@@ -437,18 +438,20 @@ def submit_response():
                 final_message = f"HR Interview Completed. Your score is {hr_score} out of {MAX_HR_QUESTIONS}. Check your profile for a detailed report."
                 audio_file = text_to_speech(final_message)
                 conversation_history.append({"role": "interviewer", "text": final_message})
-                return jsonify({"question": final_message, "audio": audio_file or None})
-            next_question = generate_hr_question()
+                response = {"question": final_message, "audio": audio_file or None}
+            else:
+                next_question = generate_hr_question()
+                audio_file = text_to_speech(next_question)
+                conversation_history.append({"role": "interviewer", "text": next_question})
+                response = {
+                    "question": next_question,
+                    "audio": audio_file or None,
+                    "emotions": emotions if emotions else {},
+                    "dominant_emotion": dominant_emotion if dominant_emotion else "None"
+                }
 
-        audio_file = text_to_speech(next_question)
-        conversation_history.append({"role": "interviewer", "text": next_question})
-        # Include emotions in the response for real-time display
-        return jsonify({
-            "question": next_question,
-            "audio": audio_file or None,
-            "emotions": emotions if emotions else {},
-            "dominant_emotion": dominant_emotion if dominant_emotion else "None"
-        })
+        logger.info(f"Submit response: {response}")
+        return jsonify(response)
     except Exception as e:
         logger.error(f"Error in submit_response: {e}")
         return jsonify({"error": str(e)}), 500
@@ -490,14 +493,33 @@ def profile():
 def hr_profile():
     global hr_score, MAX_HR_QUESTIONS, hr_emotions_history, hr_soft_skills_history
     try:
-        # Calculate average emotions
-        avg_emotions = {}
+        # Calculate average emotions in a human-readable way
+        avg_emotions_description = ""
         if hr_emotions_history:
+            avg_emotions = {}
             for emotion_dict in hr_emotions_history:
                 for emotion, value in emotion_dict.items():
                     avg_emotions[emotion] = avg_emotions.get(emotion, 0) + value
             for emotion in avg_emotions:
                 avg_emotions[emotion] /= len(hr_emotions_history)
+
+            # Interpret emotions in a conversational tone
+            prominent_emotions = sorted(avg_emotions.items(), key=lambda x: x[1], reverse=True)[:2]  # Top 2 emotions
+            if prominent_emotions:
+                primary_emotion, primary_value = prominent_emotions[0]
+                if primary_value > 40:
+                    avg_emotions_description += f"You came across as quite {primary_emotion} during the interview. "
+                elif primary_value > 20:
+                    avg_emotions_description += f"You showed some {primary_emotion} vibes at times. "
+                else:
+                    avg_emotions_description += f"You stayed pretty balanced, with a hint of {primary_emotion}. "
+                
+                if len(prominent_emotions) > 1:
+                    secondary_emotion, secondary_value = prominent_emotions[1]
+                    if secondary_value > 20:
+                        avg_emotions_description += f"There was also a touch of {secondary_emotion} in your responses."
+            else:
+                avg_emotions_description = "Your emotions were pretty neutral throughout—nice and steady!"
 
         # Calculate soft skills metrics
         confidence_count = {"High": 0, "Low": 0}
@@ -509,32 +531,74 @@ def hr_profile():
             avg_positivity += skills["positivity"]
         avg_positivity /= len(hr_soft_skills_history) if hr_soft_skills_history else 1
 
-        # Generate feedback
+        # Human-readable confidence and enthusiasm
+        confidence_description = (
+            "You sounded confident most of the time—great job keeping your voice steady!" 
+            if confidence_count["High"] >= confidence_count["Low"] 
+            else "You seemed a bit hesitant at times; try speaking up a little more next time."
+        )
+        enthusiasm_description = (
+            "Your energy was infectious—you really brought some enthusiasm to the table!" 
+            if enthusiasm_count["High"] >= enthusiasm_count["Low"] 
+            else "You could perk up a bit; adding some energy might make your answers pop more."
+        )
+        positivity_description = (
+            "Your responses had a nice positive vibe—very uplifting!" if avg_positivity > 0.2 
+            else "You were fairly neutral; maybe sprinkle in some positivity to shine brighter!" if avg_positivity >= -0.2 
+            else "Things felt a bit downbeat; try focusing on the brighter side in your answers."
+        )
+
+        # Generate specific feedback
         feedback = []
         if hr_score < MAX_HR_QUESTIONS * 0.7:
-            feedback.append("Focus on providing clearer and more professional responses.")
+            feedback.append("Your answers could use a bit more clarity and polish—try structuring them with a clear start, middle, and end.")
         if confidence_count["Low"] > confidence_count["High"]:
-            feedback.append("Work on speaking with more confidence; try practicing with a louder, steady voice.")
+            feedback.append("You might want to practice speaking with more confidence; a louder, steady tone can make a big difference.")
         if enthusiasm_count["Low"] > enthusiasm_count["High"]:
-            feedback.append("Show more enthusiasm; vary your tone to sound more engaged.")
+            feedback.append("Bring some more enthusiasm to your voice—varying your tone can show you’re engaged and excited.")
         if avg_positivity < 0:
-            feedback.append("Try to maintain a positive tone in your responses.")
+            feedback.append("Try to keep a positive spin on things—it helps leave a great impression!")
         if "angry" in avg_emotions and avg_emotions["angry"] > 20:
-            feedback.append("You appeared frustrated at times; practice staying calm under pressure.")
+            feedback.append("You seemed a bit frustrated at times; staying calm and composed could help you come across even better.")
 
+        # Overall HR interview summary
+        overall_summary = f"Overall, you scored {hr_score} out of {MAX_HR_QUESTIONS}, which is "
+        if hr_score >= MAX_HR_QUESTIONS * 0.9:
+            overall_summary += "fantastic—you're really shining in these interviews! "
+        elif hr_score >= MAX_HR_QUESTIONS * 0.7:
+            overall_summary += "solid—you’re doing well with room to polish a few things. "
+        else:
+            overall_summary += "a good start—there’s definitely potential to build on! "
+
+        areas_to_improve = []
+        if hr_score < MAX_HR_QUESTIONS * 0.9:  # Not perfect score
+            if confidence_count["Low"] > confidence_count["High"] or enthusiasm_count["Low"] > enthusiasm_count["High"]:
+                areas_to_improve.append("working on your delivery—confidence and enthusiasm can really elevate your presence")
+            if avg_positivity < 0.2:
+                areas_to_improve.append("adding a bit more positivity to your tone—it can make you more memorable")
+            if hr_score < MAX_HR_QUESTIONS * 0.7:
+                areas_to_improve.append("structuring your answers more clearly—think about giving concise examples with impact")
+            if not areas_to_improve:
+                areas_to_improve.append("fine-tuning small details to push your performance to the next level")
+        
+        overall_summary += "To improve, focus on " + " and ".join(areas_to_improve) + ". Keep practicing, and you’ll get even stronger!"
+
+        # Compile the report
         report = {
             "score": hr_score,
             "max_score": MAX_HR_QUESTIONS,
-            "avg_emotions": avg_emotions,
-            "confidence": f"High: {confidence_count['High']}, Low: {confidence_count['Low']}",
-            "enthusiasm": f"High: {enthusiasm_count['High']}, Low: {enthusiasm_count['Low']}",
-            "avg_positivity": round(avg_positivity, 2),
-            "feedback": feedback if feedback else ["Great job! Keep practicing to maintain consistency."]
+            "emotions": avg_emotions_description,
+            "confidence": confidence_description,
+            "enthusiasm": enthusiasm_description,
+            "positivity": positivity_description,
+            "feedback": feedback if feedback else ["You’re doing great—keep it up with consistent practice!"],
+            "overall_summary": overall_summary
         }
+        logger.info(f"HR profile report: {report}")
         return jsonify(report)
     except Exception as e:
         logger.error(f"Error generating HR profile: {e}")
         return jsonify({"error": "Unable to generate report"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)
