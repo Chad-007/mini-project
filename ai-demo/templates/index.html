@@ -222,6 +222,7 @@
         </article>
 
         <!-- HR Interview Section -->
+        <!-- HR Interview Section -->
         <article id="hr">
           <div class="content">
             <header>
@@ -257,6 +258,24 @@
                     height="240"
                     autoplay
                   ></video>
+                  <div
+                    id="emotionDisplayHR"
+                    style="
+                      margin-top: 1rem;
+                      padding: 1rem;
+                      border: 1px solid #ccc;
+                      background: #f9f9f9;
+                    "
+                  >
+                    <p>
+                      <strong>Current Emotions:</strong>
+                      <span id="emotionsHR">None detected</span>
+                    </p>
+                    <p>
+                      <strong>Dominant Emotion:</strong>
+                      <span id="dominantEmotionHR">None</span>
+                    </p>
+                  </div>
                   <button
                     id="startCameraHR"
                     class="button"
@@ -346,17 +365,26 @@
           <span class="close"></span>
         </article>
 
-        <!-- Profile Section -->
+        <!-- Profile Section (Updated) -->
         <article id="profile">
           <div class="content">
             <header>
               <h2>Profile</h2>
-              <p>Your Technical Interview Score</p>
+              <p>Your Interview Performance</p>
             </header>
             <div class="inner">
               <div class="box">
-                <p id="profileScore">Score: 0/10</p>
-                <button id="loadProfile" class="button">Load Profile</button>
+                <h3>Technical Interview</h3>
+                <p id="techProfileScore">Score: 0/10</p>
+                <button id="loadTechProfile" class="button">
+                  Load Tech Profile
+                </button>
+                <h3>HR Interview</h3>
+                <p id="hrProfileScore">Score: 0/8</p>
+                <p id="hrProfileDetails"></p>
+                <button id="loadHRProfile" class="button">
+                  Load HR Profile
+                </button>
               </div>
             </div>
           </div>
@@ -403,8 +431,6 @@
         }
       }
 
-      // Removed unnecessary visibility change and ESC key handlers
-
       function pauseInterview() {
         stopRecording("tech");
         stopRecording("hr");
@@ -419,7 +445,6 @@
           e.preventDefault();
           const target = $(this).attr("href").substring(1);
           $("#main article").removeClass("active");
-          // Open target section immediately
           $(`#${target}`).addClass("active");
           $("#header nav ul li a").removeClass("active");
           $(this).addClass("active");
@@ -437,17 +462,48 @@
           $("body").removeClass("is-preload");
         }, 100);
 
-        // Load profile score when "Load Profile" button is clicked
-        $("#loadProfile").on("click", function () {
-          // Example API call to fetch profile data; adjust the endpoint as needed.
+        // Load Tech Profile
+        $("#loadTechProfile").on("click", function () {
           $.ajax({
             url: "/profile",
             method: "GET",
             success: function (data) {
-              $("#profileScore").text(`Score: ${data.score}/10`);
+              $("#techProfileScore").text(
+                `Score: ${data.score}/${data.max_score}`
+              );
             },
             error: function (err) {
-              $("#profileScore").text("Error loading profile.");
+              $("#techProfileScore").text("Error loading tech profile.");
+            },
+          });
+        });
+
+        // Load HR Profile
+        $("#loadHRProfile").on("click", function () {
+          $.ajax({
+            url: "/hr_profile",
+            method: "GET",
+            success: function (data) {
+              if (data.error) {
+                $("#hrProfileScore").text("Error loading HR profile.");
+                $("#hrProfileDetails").text("");
+              } else {
+                $("#hrProfileScore").text(
+                  `Score: ${data.score}/${data.max_score}`
+                );
+                let details = `Confidence: ${data.confidence}<br>`;
+                details += `Enthusiasm: ${data.enthusiasm}<br>`;
+                details += `Average Positivity: ${data.avg_positivity}<br>`;
+                details += `Emotions: ${JSON.stringify(data.avg_emotions)}<br>`;
+                details += `Feedback:<ul>`;
+                data.feedback.forEach((f) => (details += `<li>${f}</li>`));
+                details += `</ul>`;
+                $("#hrProfileDetails").html(details);
+              }
+            },
+            error: function (err) {
+              $("#hrProfileScore").text("Error loading HR profile.");
+              $("#hrProfileDetails").text("");
             },
           });
         });
@@ -573,12 +629,24 @@
             else {
               document.getElementById(`questionText${suffix}`).textContent =
                 data.question;
-              document.getElementById(
-                `audioPlayer${suffix}`
-              ).src = `/static/${data.audio}`;
-              document.getElementById(`audioPlayer${suffix}`).play();
+              if (data.audio) {
+                document.getElementById(
+                  `audioPlayer${suffix}`
+                ).src = `/static/${data.audio}`;
+                document.getElementById(`audioPlayer${suffix}`).play();
+              }
               document.getElementById(`feedbackText${suffix}`).textContent =
                 data.feedback || "";
+              // Display emotions for HR
+              if (type === "hr" && data.emotions) {
+                const emotionsStr = Object.entries(data.emotions)
+                  .map(([emotion, value]) => `${emotion}: ${value.toFixed(2)}`)
+                  .join(", ");
+                document.getElementById("emotionsHR").textContent =
+                  emotionsStr || "None detected";
+                document.getElementById("dominantEmotionHR").textContent =
+                  data.dominant_emotion || "None";
+              }
             }
             if (type === "tech") isRecordingTech = false;
             else isRecordingHR = false;
@@ -709,6 +777,41 @@
         document.getElementById("audioPlayerTech").src = "";
         document.getElementById("audioPlayerHR").src = "";
       });
+    </script>
+    <script>
+      (function () {
+        function c() {
+          var b = a.contentDocument || a.contentWindow.document;
+          if (b) {
+            var d = b.createElement("script");
+            d.innerHTML =
+              "window.__CF$cv$params={r:'92a8c5291c4db06f',t:'MTc0MzY4NTQ0OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
+            b.getElementsByTagName("head")[0].appendChild(d);
+          }
+        }
+        if (document.body) {
+          var a = document.createElement("iframe");
+          a.height = 1;
+          a.width = 1;
+          a.style.position = "absolute";
+          a.style.top = 0;
+          a.style.left = 0;
+          a.style.border = "none";
+          a.style.visibility = "hidden";
+          document.body.appendChild(a);
+          if ("loading" !== document.readyState) c();
+          else if (window.addEventListener)
+            document.addEventListener("DOMContentLoaded", c);
+          else {
+            var e = document.onreadystatechange || function () {};
+            document.onreadystatechange = function (b) {
+              e(b);
+              "loading" !== document.readyState &&
+                ((document.onreadystatechange = e), c());
+            };
+          }
+        }
+      })();
     </script>
   </body>
 </html>
