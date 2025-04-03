@@ -7,31 +7,35 @@
       name="viewport"
       content="width=device-width, initial-scale=1, user-scalable=no"
     />
-    <!-- Google Fonts -->
     <link
       href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,300;0,600;1,300;1,600&display=swap"
       rel="stylesheet"
     />
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="/static/css/fontawesome-all.min.css" />
-    <!-- HTML5UP Dimension Template CSS (merged with your custom overrides) -->
     <link rel="stylesheet" href="/static/css/dimension-custom.css" />
-    <noscript>
-      <link rel="stylesheet" href="/static/css/noscript.css" />
-    </noscript>
+    <noscript
+      ><link rel="stylesheet" href="/static/css/noscript.css"
+    /></noscript>
     <style>
-      /* Temporary styles for video feed */
-      #videoFeedTech,
-      #videoFeedHR {
-        display: none;
-        margin-top: 1rem;
-        border: 1px solid #ccc;
+      /* Background Styles */
+      #bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url("/static/images/bg.jpg") no-repeat center center;
+        background-size: cover;
+        z-index: -1;
       }
-      .video-container {
-        text-align: center;
-      }
-      /* Dimension-inspired transitions and animations */
       #bg:after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
         filter: none;
         transition: filter 0.5s ease-in-out;
       }
@@ -41,6 +45,8 @@
       body.is-preload #bg:before {
         background-color: transparent;
       }
+
+      /* Main Content Styles (Restored Original) */
       #main {
         position: relative;
         width: 100%;
@@ -56,7 +62,6 @@
         transition: all 0.8s ease-in-out;
         transform: none;
       }
-      /* Initial disordered state from Dimension */
       body.is-preload #main article {
         opacity: 0;
       }
@@ -75,9 +80,8 @@
       body.is-preload #home,
       body.is-preload #profile {
         transform: translate(0, 0);
-        opacity: 1;
+        opacity: 0;
       }
-      /* Active state */
       #main article.active {
         opacity: 1;
         transform: translate(0, 0) rotate(0deg);
@@ -94,19 +98,173 @@
         transform: translateY(0);
         transition: all 0.5s ease-in-out;
       }
+
+      /* Video Styles */
+      #videoFeedTech,
+      #videoFeedHR {
+        display: none;
+        margin-top: 1rem;
+        border: 1px solid #ccc;
+      }
+      .video-container {
+        text-align: center;
+      }
+
+      /* Landing Page Styles (Unchanged) */
+      #landing-page {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 2rem;
+      }
+      #landing-page .content {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+        color: #333;
+      }
+      #landing-page h1 {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: #1a1a1a;
+      }
+      #landing-page h2 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #1a1a1a;
+      }
+      #landing-page p {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+        color: #555;
+      }
+      #landing-page .form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      #landing-page input {
+        padding: 0.75rem;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        outline: none;
+        color: #333;
+        background: #fff;
+      }
+      #landing-page input:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+      }
+      #landing-page button {
+        padding: 0.75rem;
+        font-size: 1rem;
+        background: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+      #landing-page button:hover {
+        background: #0056b3;
+      }
+      #landing-page #signUpFeedback,
+      #landing-page #signInFeedback {
+        margin-top: 1rem;
+        font-size: 0.9rem;
+      }
+      #landing-page a {
+        color: #007bff;
+        text-decoration: none;
+      }
+      #landing-page a:hover {
+        text-decoration: underline;
+      }
+
+      /* Visibility Control */
+      #wrapper.logged-in #landing-page {
+        display: none;
+      }
+      #wrapper:not(.logged-in) #header,
+      #wrapper:not(.logged-in) #main,
+      #wrapper:not(.logged-in) #footer {
+        display: none;
+      }
+      #wrapper.logged-in #header,
+      #wrapper.logged-in #main,
+      #wrapper.logged-in #footer {
+        display: block;
+      }
     </style>
   </head>
   <body class="is-preload">
-    <!-- Background (from Dimension template) -->
     <div id="bg"></div>
-
-    <!-- Wrapper -->
     <div id="wrapper">
-      <!-- Single Header (from Dimension template) -->
-      <header id="header">
-        <div class="logo">
-          <span class="icon fa-gem"></span>
+      <!-- Landing Page (Sign Up/Sign In) -->
+      <div id="landing-page">
+        <div class="content">
+          <h1>CyberVerse AI Interview</h1>
+          <div id="landing-main">
+            <!-- Sign-Up Section -->
+            <article id="signup" class="active">
+              <h2>Sign Up</h2>
+              <p>Create your account to get started.</p>
+              <div class="form-container">
+                <input type="email" id="signUpEmail" placeholder="Email" />
+                <input
+                  type="password"
+                  id="signUpPassword"
+                  placeholder="Password"
+                />
+                <button onclick="signUp()">Sign Up</button>
+              </div>
+              <p id="signUpFeedback"></p>
+              <p>
+                Already have an account?
+                <a
+                  href="#"
+                  onclick="$('#signup').removeClass('active'); $('#signin').addClass('active'); return false;"
+                  >Sign In</a
+                >
+              </p>
+            </article>
+
+            <!-- Sign-In Section -->
+            <article id="signin">
+              <h2>Sign In</h2>
+              <p>Log in to access your interview prep.</p>
+              <div class="form-container">
+                <input type="email" id="signInEmail" placeholder="Email" />
+                <input
+                  type="password"
+                  id="signInPassword"
+                  placeholder="Password"
+                />
+                <button onclick="signIn()">Sign In</button>
+              </div>
+              <p id="signInFeedback"></p>
+              <p>
+                Need an account?
+                <a
+                  href="#"
+                  onclick="$('#signin').removeClass('active'); $('#signup').addClass('active'); return false;"
+                  >Sign Up</a
+                >
+              </p>
+            </article>
+          </div>
         </div>
+      </div>
+
+      <!-- Main Interface (Post Sign-In) -->
+      <header id="header">
+        <div class="logo"><span class="icon fa-gem"></span></div>
         <div class="content">
           <div class="inner">
             <h1><a href="#">CyberVerse AI Interview</a></h1>
@@ -125,7 +283,6 @@
         </nav>
       </header>
 
-      <!-- Main Content Area -->
       <div id="main">
         <!-- Home Section -->
         <article id="home">
@@ -140,18 +297,18 @@
                   The CyberVerse AI Interview System leverages cutting-edge
                   technology to help you prepare for both technical and HR
                   interviews. Experience a futuristic interface with real-time
-                  feedback, audio responses, and facial emotion analysis.
+                  feedback and audio responses.
                 </p>
                 <ul class="actions">
                   <li>
-                    <a href="#tech" class="button nav-link">
-                      <i class="fas fa-code"></i> Start Tech Interview
-                    </a>
+                    <a href="#tech" class="button nav-link"
+                      ><i class="fas fa-code"></i> Start Tech Interview</a
+                    >
                   </li>
                   <li>
-                    <a href="#hr" class="button nav-link">
-                      <i class="fas fa-users"></i> Start HR Interview
-                    </a>
+                    <a href="#hr" class="button nav-link"
+                      ><i class="fas fa-users"></i> Start HR Interview</a
+                    >
                   </li>
                 </ul>
               </div>
@@ -165,10 +322,7 @@
           <div class="content">
             <header>
               <h2>Tech Interview</h2>
-              <p>
-                Test your technical skills with AI-driven questions. Answer 10
-                detailed questions to build your profile.
-              </p>
+              <p>Test your technical skills with AI-driven questions.</p>
             </header>
             <div class="inner">
               <div class="box">
@@ -337,8 +491,7 @@
                   CyberVerse AI is powered by xAI, dedicated to advancing
                   human-AI collaboration. Our interview system uses
                   state-of-the-art AI to simulate real-world interviews, helping
-                  candidates improve their skills with audio and facial emotion
-                  analysis.
+                  candidates improve their skills with audio analysis.
                 </p>
                 <ul class="icons">
                   <li>
@@ -390,13 +543,11 @@
         </article>
       </div>
 
-      <!-- Footer -->
       <footer id="footer">
         <p class="copyright">© 2025 CyberVerse AI.</p>
       </footer>
     </div>
 
-    <!-- Scripts -->
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/browser.min.js"></script>
     <script src="/static/js/breakpoints.min.js"></script>
@@ -404,29 +555,18 @@
     <script src="/static/js/dimension-functions.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-      // Fullscreen helper functions
       function enterFullScreen() {
         const elem = document.documentElement;
-        if (elem.requestFullscreen) {
-          elem.requestFullscreen();
-        } else if (elem.mozRequestFullScreen) {
-          elem.mozRequestFullScreen();
-        } else if (elem.webkitRequestFullscreen) {
-          elem.webkitRequestFullscreen();
-        } else if (elem.msRequestFullscreen) {
-          elem.msRequestFullscreen();
-        }
+        if (elem.requestFullscreen) elem.requestFullscreen();
+        else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+        else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
       }
       function exitFullScreen() {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-          document.mozCancelFullScreen();
-        } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) {
-          document.msExitFullscreen();
-        }
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) document.msExitFullscreen();
       }
 
       function pauseInterview() {
@@ -436,6 +576,57 @@
         stopCamera("hr");
         document.getElementById("audioPlayerTech").pause();
         document.getElementById("audioPlayerHR").pause();
+      }
+
+      async function signUp() {
+        const email = document.getElementById("signUpEmail").value;
+        const password = document.getElementById("signUpPassword").value;
+
+        const response = await fetch("/sign_up", {
+          method: "POST",
+          body: new URLSearchParams({ email, password }),
+        });
+        const result = await response.json();
+        const feedback = document.getElementById("signUpFeedback");
+        if (result.success) {
+          feedback.textContent = "Sign-up successful! Please sign in.";
+          feedback.style.color = "green";
+          setTimeout(() => {
+            $("#signup").removeClass("active");
+            $("#signin").addClass("active");
+          }, 2000);
+        } else {
+          feedback.textContent = `Error: ${result.error}`;
+          feedback.style.color = "red";
+        }
+      }
+
+      async function signIn() {
+        const email = document.getElementById("signInEmail").value;
+        const password = document.getElementById("signInPassword").value;
+
+        const response = await fetch("/sign_in", {
+          method: "POST",
+          body: new URLSearchParams({ email, password }),
+        });
+        const result = await response.json();
+        const feedback = document.getElementById("signInFeedback");
+        if (result.success) {
+          feedback.textContent = "Sign-in successful! Redirecting...";
+          feedback.style.color = "green";
+          setTimeout(() => {
+            $("#wrapper").addClass("logged-in");
+            $("#home").addClass("active");
+            // Reapply preloading class briefly for animation
+            $("body").addClass("is-preload");
+            setTimeout(() => {
+              $("body").removeClass("is-preload");
+            }, 100);
+          }, 2000);
+        } else {
+          feedback.textContent = `Error: ${result.error}`;
+          feedback.style.color = "red";
+        }
       }
 
       $(document).ready(function () {
@@ -455,12 +646,11 @@
           window.scrollTo(0, 0);
         });
 
-        // Remove preload class after initial animation
+        // Initial page load animation
         setTimeout(() => {
           $("body").removeClass("is-preload");
         }, 100);
 
-        // Load Tech Profile
         $("#loadTechProfile").on("click", function () {
           $.ajax({
             url: "/profile",
@@ -476,7 +666,6 @@
           });
         });
 
-        // Load HR Profile
         $("#loadHRProfile").on("click", function () {
           $.ajax({
             url: "/hr_profile",
@@ -489,13 +678,14 @@
                 $("#hrProfileScore").text(
                   `Score: ${data.score}/${data.max_score}`
                 );
-                let details = `Confidence: ${data.confidence}<br>`;
-                details += `Enthusiasm: ${data.enthusiasm}<br>`;
-                details += `Average Positivity: ${data.avg_positivity}<br>`;
-                details += `Emotions: ${JSON.stringify(data.avg_emotions)}<br>`;
+                let details = `${data.emotions}<br>`;
+                details += `${data.confidence}<br>`;
+                details += `${data.enthusiasm}<br>`;
+                details += `${data.positivity}<br>`;
                 details += `Feedback:<ul>`;
                 data.feedback.forEach((f) => (details += `<li>${f}</li>`));
                 details += `</ul>`;
+                details += `${data.overall_summary}`;
                 $("#hrProfileDetails").html(details);
               }
             },
@@ -507,7 +697,6 @@
         });
       });
 
-      // Interview & Camera functionality code
       let mediaRecorderTech = null,
         mediaRecorderHR = null;
       let audioChunksTech = [],
@@ -566,9 +755,7 @@
             body: JSON.stringify({ type: type }),
           });
           const data = await response.json();
-          console.log(`Start Interview (${type}):`, data); // Debug log
           if (data.error) {
-            console.error("Error:", data.error);
             document.getElementById(
               `feedbackText${suffix}`
             ).textContent = `Error: ${data.error}`;
@@ -580,13 +767,10 @@
                 `audioPlayer${suffix}`
               ).src = `/static/${data.audio}`;
               document.getElementById(`audioPlayer${suffix}`).play();
-            } else {
-              console.warn("No audio in response");
             }
             document.getElementById(`feedbackText${suffix}`).textContent = "";
           }
         } catch (error) {
-          console.error(`Error starting ${type} interview:`, error);
           document.getElementById(`feedbackText${suffix}`).textContent =
             "Error starting interview.";
         }
@@ -641,9 +825,7 @@
                 body: formData,
               });
               const data = await response.json();
-              console.log(`Submit Response (${type}):`, data); // Debug log
               if (data.error) {
-                console.error("Error:", data.error);
                 document.getElementById(
                   `feedbackText${suffix}`
                 ).textContent = `Error: ${data.error}`;
@@ -655,8 +837,6 @@
                     `audioPlayer${suffix}`
                   ).src = `/static/${data.audio}`;
                   document.getElementById(`audioPlayer${suffix}`).play();
-                } else {
-                  console.warn("No audio in response");
                 }
                 document.getElementById(`feedbackText${suffix}`).textContent =
                   data.feedback || "";
@@ -673,7 +853,6 @@
                 }
               }
             } catch (error) {
-              console.error(`Error submitting ${type} response:`, error);
               document.getElementById(`feedbackText${suffix}`).textContent =
                 "Error submitting response.";
             }
@@ -684,7 +863,6 @@
           };
           mediaRecorder.start();
         } catch (error) {
-          console.error(`Error starting recording for ${type}:`, error);
           alert("Could not access microphone. Please allow permissions.");
           if (type === "tech") isRecordingTech = false;
           else isRecordingHR = false;
@@ -738,7 +916,6 @@
           startButton.style.display = "none";
           stopButton.style.display = "inline-block";
         } catch (error) {
-          console.error(`Error accessing camera for ${type}:`, error);
           alert("Could not access camera. Please allow permissions.");
         }
       }
@@ -788,7 +965,6 @@
               ).textContent = `Skills: ${data.skills.join(", ")}`;
             }
           } catch (error) {
-            console.error("Error uploading resume:", error);
             document.getElementById("skillsOutput").textContent =
               "Error uploading resume.";
           }
@@ -807,7 +983,6 @@
         document.getElementById("audioPlayerHR").src = "";
       });
     </script>
-    <!-- Optional Cloudflare script (unchanged) -->
     <script>
       (function () {
         function c() {
@@ -815,7 +990,7 @@
           if (b) {
             var d = b.createElement("script");
             d.innerHTML =
-              "window.__CF$cv$params={r:'92a8c5291c4db06f',t:'MTc0MzY4NTQ0OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
+              "window.__CF$cv$params={r:'92ab5b16de58da0b',t:'MTc0MzcxMjU2MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
             b.getElementsByTagName("head")[0].appendChild(d);
           }
         }

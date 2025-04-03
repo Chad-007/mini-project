@@ -1,11 +1,11 @@
 import os
+import uuid
 import google.generativeai as genai
 from flask import Flask, render_template, request, jsonify
 import speech_recognition as sr
 import numpy as np
 import librosa
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-import time
 import logging
 from pydub import AudioSegment
 from deepface import DeepFace
@@ -16,6 +16,16 @@ import docx
 import spacy
 import random
 from elevenlabs.client import ElevenLabs
+from supabase import create_client, Client
+from datetime import datetime
+import json
+
+# Hardcoded Supabase credentials
+SUPABASE_URL = "https://eynzozsmskusunwmyxjo.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5bnpvenNtc2t1c3Vud215eGpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2ODc3MDUsImV4cCI6MjA1OTI2MzcwNX0.8szPS5fXjdVLyM9Z5raKPlFqVBFSuNsMO6zG0GwtrYk"
+
+# Initialize Supabase client
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -24,9 +34,9 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 # Configure APIs
-GOOGLE_API_KEY = "AIzaSyAU3lqb-xlubVzrTyDslPaxX_tmUD1i_eo"  # Replace with your valid Google Cloud API key
+GOOGLE_API_KEY = "AIzaSyAU3lqb-xlubVzrTyDslPaxX_tmUD1i_eo"
 genai.configure(api_key=GOOGLE_API_KEY)
-ELEVENLABS_API_KEY = "YOUR_ELEVENLABS_API_KEY"  # Replace with your valid ElevenLabs API key
+ELEVENLABS_API_KEY = "()sk_ca92f6843b635d499e0cc88faeb59178871e0b55babeba7c"
 client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 
 # Model selection
@@ -55,6 +65,7 @@ nlp = spacy.load("en_core_web_sm")
 conversation_history = []
 current_interview_type = None
 extracted_skills = []
+current_user_id = None
 
 # Tech interview variables
 tech_question_count = 0
@@ -105,12 +116,12 @@ def gemini_mark_answer(answer_text):
         logger.error(f"Error in marking answer with Gemini: {e}")
         return 0.5
 
-# Emotion detection with float32 conversion
+# Emotion detection
 def detect_emotion(frame):
     try:
         result = DeepFace.analyze(frame, actions=['emotion'], enforce_detection=False)
         if result and isinstance(result, list) and len(result) > 0:
-            emotions = {k: float(v) for k, v in result[0]['emotion'].items()}  # Convert float32 to float
+            emotions = {k: float(v) for k, v in result[0]['emotion'].items()}
             dominant_emotion = result[0]['dominant_emotion']
             logger.info(f"Detected emotions: {emotions}, Dominant: {dominant_emotion}")
             return emotions, dominant_emotion
@@ -153,10 +164,10 @@ def generate_tech_question(response=None):
             skill = random.choice(extracted_skills)
             if not response:
                 prompt = (f"Given the conversation context:\n{context}\n"
-                          f"Ask a basic technical interview question about {skill} that requires more than a one-word answer.")
+                          f"Ask a basic technical interview question about {skill} that requires more than a one-word answer. but dont ask questions that are too big")
             else:
                 prompt = (f"Given the conversation context:\n{context}\n"
-                          f"Based on the response: '{response}', ask a follow-up technical question about {skill} that builds on the previous answer.")
+                          f"Based on the response: '{response}', ask a follow-up technical question about {skill} that builds on the previous answer. but not too big")
         else:
             if not response:
                 prompt = (f"Given the conversation context:\n{context}\n"
@@ -294,7 +305,7 @@ def extract_skills(text):
             "dask", "apache hive", "apache pig",
             "mongodb", "postgresql", "mysql", "oracle", "sqlite", "cassandra",
             "redis", "elasticsearch", "mariadb", "firebase",
-            "aws", "azure", "google cloud", "ibm cloud", "oracle cloud", "heroku",
+            "aws", "azure", "google cloud", "ibm cloud", "oraclevier cloud", "heroku",
             "digitalocean", "linode",
             "docker", "kubernetes", "jenkins", "ansible", "terraform", "chef",
             "puppet", "circleci", "travis ci", "github actions", "gitlab ci",
@@ -337,10 +348,74 @@ def extract_skills(text):
 def index():
     return render_template('index.html')
 
+@app.route('/sign_up', methods=['POST'])
+def sign_up_route():
+    global current_user_id
+    try:
+        email = request.form.get('email')
+        password = request.form.get('password')
+        if not email or not password:
+            return jsonify({"error": "Missing email or password"}), 400
+
+        user_id = str(uuid.uuid4())
+        existing_user = supabase.table("users").select("email").eq("email", email).execute()
+        if existing_user.data:
+            return jsonify({"error": "Email already exists"}), 400
+
+        user_data = {"user_id": user_id, "email": email, "created_at": datetime.utcnow().isoformat()}
+        user_response = supabase.table("users").insert(user_data).execute()
+        if not user_response.data:
+            return jsonify({"error": "Failed to insert user into database"}), 500
+
+        profile_data = {
+            "user_id": user_id,
+            "tech_score": 0.0,
+            "tech_max_score": 10,
+            "hr_score": 0.0,
+            "hr_max_score": 8,
+            "hr_emotions": [],  # Initialize as empty list, not string
+            "hr_soft_skills": [],  # Initialize as empty list, not string
+            "last_updated": datetime.utcnow().isoformat()
+        }
+        profile_response = supabase.table("profiles").insert(profile_data).execute()
+        if not profile_response.data:
+            return jsonify({"error": "Failed to create user profile"}), 500
+
+        current_user_id = user_id
+        logger.info(f"User signed up with user_id: {user_id}")
+        return jsonify({"success": True, "user_id": user_id})
+    except Exception as e:
+        logger.error(f"Error in sign-up route: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
+@app.route('/sign_in', methods=['POST'])
+def sign_in_route():
+    global current_user_id
+    try:
+        email = request.form.get('email')
+        password = request.form.get('password')
+        if not email or not password:
+            return jsonify({"error": "Missing email or password"}), 400
+
+        user = supabase.table("users").select("user_id").eq("email", email).execute()
+        if not user.data:
+            return jsonify({"error": "Invalid email or password"}), 400
+
+        user_id = user.data[0]["user_id"]
+        current_user_id = user_id
+        logger.info(f"User signed in with user_id: {user_id}")
+        return jsonify({"success": True, "user_id": user_id})
+    except Exception as e:
+        logger.error(f"Error in sign-in route: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
 @app.route('/start_interview', methods=['POST'])
 def start_interview():
     global conversation_history, current_interview_type, tech_question_count, tech_score, hr_question_count, hr_score, hr_emotions_history, hr_soft_skills_history
     try:
+        if not current_user_id:
+            return jsonify({"error": "User not authenticated"}), 401
+
         interview_type = request.json.get('type')
         if not interview_type:
             return jsonify({"error": "Interview type not provided"}), 400
@@ -357,7 +432,7 @@ def start_interview():
             hr_emotions_history = []
             hr_soft_skills_history = []
             question = generate_hr_question()
-        
+
         audio_file = text_to_speech(question)
         if not audio_file:
             logger.warning("Audio generation failed, proceeding without audio")
@@ -374,6 +449,9 @@ def start_interview():
 def submit_response():
     global conversation_history, current_interview_type, tech_question_count, tech_score, hr_question_count, hr_score, hr_emotions_history, hr_soft_skills_history
     try:
+        if not current_user_id:
+            return jsonify({"error": "User not authenticated"}), 401
+
         interview_type = request.form.get('type') or current_interview_type
         if not interview_type:
             return jsonify({"error": "Interview type not provided"}), 400
@@ -401,7 +479,6 @@ def submit_response():
 
         conversation_history.append({"role": "user", "text": response_text})
 
-        # Analyze speech
         pitch, energy = analyze_speech(audio_path)
         image_data = request.form.get('image_data')
         emotions, dominant_emotion = None, None
@@ -422,6 +499,18 @@ def submit_response():
                 final_message = f"Tech Interview Completed. Your score is {tech_score} out of {MAX_TECH_QUESTIONS}."
                 audio_file = text_to_speech(final_message)
                 conversation_history.append({"role": "interviewer", "text": final_message})
+                update_data = {
+                    "tech_score": float(tech_score),
+                    "last_updated": datetime.utcnow().isoformat()
+                }
+                logger.info(f"Attempting to update tech_score to {tech_score} for user_id: {current_user_id}")
+                update_response = supabase.table("profiles").update(update_data).eq("user_id", current_user_id).execute()
+                logger.info(f"Tech update response: {update_response.data}")
+                profile_check = supabase.table("profiles").select("tech_score").eq("user_id", current_user_id).execute()
+                if profile_check.data and profile_check.data[0]["tech_score"] == float(tech_score):
+                    logger.info(f"Verified tech_score updated to {tech_score} for user_id: {current_user_id}")
+                else:
+                    logger.error(f"Failed to verify tech_score update for user_id: {current_user_id}. Current value: {profile_check.data}")
                 response = {"question": final_message, "audio": audio_file or None}
             else:
                 next_question = generate_tech_question(response_text)
@@ -438,6 +527,15 @@ def submit_response():
                 final_message = f"HR Interview Completed. Your score is {hr_score} out of {MAX_HR_QUESTIONS}. Check your profile for a detailed report."
                 audio_file = text_to_speech(final_message)
                 conversation_history.append({"role": "interviewer", "text": final_message})
+                update_data = {
+                    "hr_score": float(hr_score),
+                    "hr_emotions": hr_emotions_history,  # Store as list of dicts
+                    "hr_soft_skills": hr_soft_skills_history,  # Store as list of dicts
+                    "last_updated": datetime.utcnow().isoformat()
+                }
+                logger.info(f"Attempting to update HR profile for user_id: {current_user_id}")
+                update_response = supabase.table("profiles").update(update_data).eq("user_id", current_user_id).execute()
+                logger.info(f"HR update response: {update_response.data}")
                 response = {"question": final_message, "audio": audio_file or None}
             else:
                 next_question = generate_hr_question()
@@ -465,6 +563,9 @@ def submit_response():
 def upload_resume():
     global extracted_skills
     try:
+        if not current_user_id:
+            return jsonify({"error": "User not authenticated"}), 401
+
         if 'file' not in request.files:
             logger.error("No file part in request")
             return jsonify({"error": "No file part"}), 400
@@ -486,42 +587,75 @@ def upload_resume():
 
 @app.route('/profile', methods=['GET'])
 def profile():
-    global tech_score, MAX_TECH_QUESTIONS
-    return jsonify({"score": tech_score, "max_score": MAX_TECH_QUESTIONS})
+    try:
+        if not current_user_id:
+            return jsonify({"error": "User not authenticated"}), 401
+
+        profile_data = supabase.table("profiles").select("*").eq("user_id", current_user_id).execute()
+        if not profile_data.data:
+            return jsonify({"error": "Profile not found"}), 404
+
+        profile = profile_data.data[0]
+        logger.info(f"Fetched tech profile for user_id {current_user_id}: tech_score={profile['tech_score']}")
+        return jsonify({
+            "score": float(profile["tech_score"]),  # Changed from tech_score to score
+            "max_score": profile["tech_max_score"]
+        })
+    except Exception as e:
+        logger.error(f"Error in profile route: {e}")
+        return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/hr_profile', methods=['GET'])
 def hr_profile():
-    global hr_score, MAX_HR_QUESTIONS, hr_emotions_history, hr_soft_skills_history
     try:
-        # Calculate average emotions in a human-readable way
-        avg_emotions_description = ""
-        if hr_emotions_history:
-            avg_emotions = {}
-            for emotion_dict in hr_emotions_history:
-                for emotion, value in emotion_dict.items():
-                    avg_emotions[emotion] = avg_emotions.get(emotion, 0) + value
-            for emotion in avg_emotions:
-                avg_emotions[emotion] /= len(hr_emotions_history)
+        if not current_user_id:
+            return jsonify({"error": "User not authenticated"}), 401
 
-            # Interpret emotions in a conversational tone
-            prominent_emotions = sorted(avg_emotions.items(), key=lambda x: x[1], reverse=True)[:2]  # Top 2 emotions
-            if prominent_emotions:
-                primary_emotion, primary_value = prominent_emotions[0]
-                if primary_value > 40:
-                    avg_emotions_description += f"You came across as quite {primary_emotion} during the interview. "
-                elif primary_value > 20:
-                    avg_emotions_description += f"You showed some {primary_emotion} vibes at times. "
-                else:
-                    avg_emotions_description += f"You stayed pretty balanced, with a hint of {primary_emotion}. "
-                
-                if len(prominent_emotions) > 1:
-                    secondary_emotion, secondary_value = prominent_emotions[1]
-                    if secondary_value > 20:
-                        avg_emotions_description += f"There was also a touch of {secondary_emotion} in your responses."
+        profile_data = supabase.table("profiles").select("*").eq("user_id", current_user_id).execute()
+        if not profile_data.data:
+            return jsonify({"error": "Profile not found"}), 404
+
+        profile = profile_data.data[0]
+        hr_score = float(profile["hr_score"])
+        MAX_HR_QUESTIONS = profile["hr_max_score"]
+        # Handle case where hr_emotions might be a string from previous runs
+        hr_emotions_history = profile["hr_emotions"]
+        if isinstance(hr_emotions_history, str):
+            hr_emotions_history = json.loads(hr_emotions_history) if hr_emotions_history else []
+        hr_soft_skills_history = profile["hr_soft_skills"]
+        if isinstance(hr_soft_skills_history, str):
+            hr_soft_skills_history = json.loads(hr_soft_skills_history) if hr_soft_skills_history else []
+
+        avg_emotions_description = ""
+        avg_emotions = {}  # Initialize avg_emotions here
+        if hr_emotions_history:
+            for emotion_dict in hr_emotions_history:
+                if emotion_dict:  # Ensure dict is not empty
+                    for emotion, value in emotion_dict.items():
+                        avg_emotions[emotion] = avg_emotions.get(emotion, 0) + value
+            if avg_emotions:
+                for emotion in avg_emotions:
+                    avg_emotions[emotion] /= len(hr_emotions_history)
+
+                prominent_emotions = sorted(avg_emotions.items(), key=lambda x: x[1], reverse=True)[:2]
+                if prominent_emotions:
+                    primary_emotion, primary_value = prominent_emotions[0]
+                    if primary_value > 40:
+                        avg_emotions_description += f"You came across as quite {primary_emotion} during the interview. "
+                    elif primary_value > 20:
+                        avg_emotions_description += f"You showed some {primary_emotion} vibes at times. "
+                    else:
+                        avg_emotions_description += f"You stayed pretty balanced, with a hint of {primary_emotion}. "
+                    
+                    if len(prominent_emotions) > 1:
+                        secondary_emotion, secondary_value = prominent_emotions[1]
+                        if secondary_value > 20:
+                            avg_emotions_description += f"There was also a touch of {secondary_emotion} in your responses."
             else:
                 avg_emotions_description = "Your emotions were pretty neutral throughout—nice and steady!"
+        else:
+            avg_emotions_description = "No emotional data available from your interview."
 
-        # Calculate soft skills metrics
         confidence_count = {"High": 0, "Low": 0}
         enthusiasm_count = {"High": 0, "Low": 0}
         avg_positivity = 0
@@ -531,7 +665,6 @@ def hr_profile():
             avg_positivity += skills["positivity"]
         avg_positivity /= len(hr_soft_skills_history) if hr_soft_skills_history else 1
 
-        # Human-readable confidence and enthusiasm
         confidence_description = (
             "You sounded confident most of the time—great job keeping your voice steady!" 
             if confidence_count["High"] >= confidence_count["Low"] 
@@ -548,7 +681,6 @@ def hr_profile():
             else "Things felt a bit downbeat; try focusing on the brighter side in your answers."
         )
 
-        # Generate specific feedback
         feedback = []
         if hr_score < MAX_HR_QUESTIONS * 0.7:
             feedback.append("Your answers could use a bit more clarity and polish—try structuring them with a clear start, middle, and end.")
@@ -561,7 +693,6 @@ def hr_profile():
         if "angry" in avg_emotions and avg_emotions["angry"] > 20:
             feedback.append("You seemed a bit frustrated at times; staying calm and composed could help you come across even better.")
 
-        # Overall HR interview summary
         overall_summary = f"Overall, you scored {hr_score} out of {MAX_HR_QUESTIONS}, which is "
         if hr_score >= MAX_HR_QUESTIONS * 0.9:
             overall_summary += "fantastic—you're really shining in these interviews! "
@@ -571,7 +702,7 @@ def hr_profile():
             overall_summary += "a good start—there’s definitely potential to build on! "
 
         areas_to_improve = []
-        if hr_score < MAX_HR_QUESTIONS * 0.9:  # Not perfect score
+        if hr_score < MAX_HR_QUESTIONS * 0.9:
             if confidence_count["Low"] > confidence_count["High"] or enthusiasm_count["Low"] > enthusiasm_count["High"]:
                 areas_to_improve.append("working on your delivery—confidence and enthusiasm can really elevate your presence")
             if avg_positivity < 0.2:
@@ -583,7 +714,6 @@ def hr_profile():
         
         overall_summary += "To improve, focus on " + " and ".join(areas_to_improve) + ". Keep practicing, and you’ll get even stronger!"
 
-        # Compile the report
         report = {
             "score": hr_score,
             "max_score": MAX_HR_QUESTIONS,
