@@ -95,7 +95,7 @@ hr_question_index = 0
 # Evaluate HR response using Gemini
 def gemini_mark_hr_answer(answer_text):
     try:
-        prompt = (f"Mark the following HR interview answer on a scale from 0.0 to 1.0 for "
+        prompt = (f"Mark the following HR interview answer on a scale from 0.0 to 1.0 for be liberal in marking dont be very strict give them enough marks  "
                   f"clarity, relevance, and professionalism: '{answer_text}'. Return only the mark as a floating point number (e.g., 0.75).")
         response_obj = model.generate_content(prompt)
         mark = float(response_obj.text.strip().split()[0])
@@ -107,7 +107,7 @@ def gemini_mark_hr_answer(answer_text):
 # Evaluate tech response using Gemini
 def gemini_mark_answer(answer_text):
     try:
-        prompt = (f"Mark the following technical answer on a scale from 0.0 to 1.0 for "
+        prompt = (f"Mark the following technical answer on a scale from 0.0 to 1.0 for give marks in a liberal fashion dont be very strict in giving marks give them enough marks"
                   f"accuracy and relevance: '{answer_text}'. Return only the mark as a floating point number (for example, 0.75).")
         response_obj = model.generate_content(prompt)
         mark = float(response_obj.text.strip().split()[0])
@@ -164,7 +164,7 @@ def generate_tech_question(response=None):
             skill = random.choice(extracted_skills)
             if not response:
                 prompt = (f"Given the conversation context:\n{context}\n"
-                          f"Ask a basic technical interview question about {skill} that requires more than a one-word answer. but dont ask questions that are too big")
+                          f"Ask a basic technical interview question about {skill} that requires more than a one-word answer. but dont ask questions that are too big aont ask any question that reauires me to submit the code snippet etc..")
             else:
                 prompt = (f"Given the conversation context:\n{context}\n"
                           f"Based on the response: '{response}', ask a follow-up technical question about {skill} that builds on the previous answer. but not too big")
