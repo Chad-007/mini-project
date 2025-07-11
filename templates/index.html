@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>CyberVerse AI Interview | Dimension</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=no"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,300;0,600;1,300;1,600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/css/fontawesome-all.min.css" />
+    <link rel="stylesheet" href="/static/css/dimension-custom.css" />
+    <noscript
+      ><link rel="stylesheet" href="/static/css/noscript.css"
+    /></noscript>
+    <style>
+      /* Background Styles */
+      #bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url("/static/images/bg.jpg") no-repeat center center;
+        background-size: cover;
+        z-index: -1;
+      }
+      #bg:after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        filter: none;
+        transition: filter 0.5s ease-in-out;
+      }
+      body.is-article-visible #bg:after {
+        filter: blur(1rem);
+      }
+      body.is-preload #bg:before {
+        background-color: transparent;
+      }
+
+      /* Main Content Styles (Restored Original) */
+      #main {
+        position: relative;
+        width: 100%;
+        max-width: 40rem;
+        margin: 0 auto;
+      }
+      #main article {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        opacity: 0;
+        transition: all 0.8s ease-in-out;
+        transform: none;
+      }
+      body.is-preload #main article {
+        opacity: 0;
+      }
+      body.is-preload #tech {
+        transform: translate(-100px, -50px) rotate(10deg);
+      }
+      body.is-preload #hr {
+        transform: translate(150px, 100px) rotate(-15deg);
+      }
+      body.is-preload #resume {
+        transform: translate(-80px, 200px) rotate(20deg);
+      }
+      body.is-preload #about {
+        transform: translate(120px, -150px) rotate(-10deg);
+      }
+      body.is-preload #home,
+      body.is-preload #profile {
+        transform: translate(0, 0);
+        opacity: 0;
+      }
+      #main article.active {
+        opacity: 1;
+        transform: translate(0, 0) rotate(0deg);
+        z-index: 2;
+      }
+      body.is-preload #header,
+      body.is-preload #footer {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      body:not(.is-preload) #header,
+      body:not(.is-preload) #footer {
+        opacity: 1;
+        transform: translateY(0);
+        transition: all 0.5s ease-in-out;
+      }
+
+      /* Video Styles */
+      #videoFeedTech,
+      #videoFeedHR {
+        display: none;
+        margin-top: 1rem;
+        border: 1px solid #ccc;
+      }
+      .video-container {
+        text-align: center;
+      }
+
+      /* Landing Page Styles (Unchanged) */
+      #landing-page {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 2rem;
+      }
+      #landing-page .content {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+        color: #333;
+      }
+      #landing-page h1 {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: #1a1a1a;
+      }
+      #landing-page h2 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #1a1a1a;
+      }
+      #landing-page p {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+        color: #555;
+      }
+      #landing-page .form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      #landing-page input {
+        padding: 0.75rem;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        outline: none;
+        color: #333;
+        background: #fff;
+      }
+      #landing-page input:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+      }
+      #landing-page button {
+        padding: 0.75rem;
+        font-size: 1rem;
+        background: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+      #landing-page button:hover {
+        background: #0056b3;
+      }
+      #landing-page #signUpFeedback,
+      #landing-page #signInFeedback {
+        margin-top: 1rem;
+        font-size: 0.9rem;
+      }
+      #landing-page a {
+        color: #007bff;
+        text-decoration: none;
+      }
+      #landing-page a:hover {
+        text-decoration: underline;
+      }
+
+      /* Visibility Control */
+      #wrapper.logged-in #landing-page {
+        display: none;
+      }
+      #wrapper:not(.logged-in) #header,
+      #wrapper:not(.logged-in) #main,
+      #wrapper:not(.logged-in) #footer {
+        display: none;
+      }
+      #wrapper.logged-in #header,
+      #wrapper.logged-in #main,
+      #wrapper.logged-in #footer {
+        display: block;
+      }
+    </style>
+  </head>
+  <body class="is-preload">
+    <div id="bg"></div>
+    <div id="wrapper">
+      <!-- Landing Page (Sign Up/Sign In) -->
+      <div id="landing-page">
+        <div class="content">
+          <h1>CyberVerse AI Interview</h1>
+          <div id="landing-main">
+            <!-- Sign-Up Section -->
+            <article id="signup" class="active">
+              <h2>Sign Up</h2>
+              <p>Create your account to get started.</p>
+              <div class="form-container">
+                <input type="email" id="signUpEmail" placeholder="Email" />
+                <input
+                  type="password"
+                  id="signUpPassword"
+                  placeholder="Password"
+                />
+                <button onclick="signUp()">Sign Up</button>
+              </div>
+              <p id="signUpFeedback"></p>
+              <p>
+                Already have an account?
+                <a
+                  href="#"
+                  onclick="$('#signup').removeClass('active'); $('#signin').addClass('active'); return false;"
+                  >Sign In</a
+                >
+              </p>
+            </article>
+
+            <!-- Sign-In Section -->
+            <article id="signin">
+              <h2>Sign In</h2>
+              <p>Log in to access your interview prep.</p>
+              <div class="form-container">
+                <input type="email" id="signInEmail" placeholder="Email" />
+                <input
+                  type="password"
+                  id="signInPassword"
+                  placeholder="Password"
+                />
+                <button onclick="signIn()">Sign In</button>
+              </div>
+              <p id="signInFeedback"></p>
+              <p>
+                Need an account?
+                <a
+                  href="#"
+                  onclick="$('#signin').removeClass('active'); $('#signup').addClass('active'); return false;"
+                  >Sign Up</a
+                >
+              </p>
+            </article>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Interface (Post Sign-In) -->
+      <header id="header">
+        <div class="logo"><span class="icon fa-gem"></span></div>
+        <div class="content">
+          <div class="inner">
+            <h1><a href="#">CyberVerse AI Interview</a></h1>
+            <p>Advanced AI-powered interview preparation system</p>
+          </div>
+        </div>
+        <nav>
+          <ul>
+            <li><a href="#home" class="nav-link">Home</a></li>
+            <li><a href="#tech" class="nav-link">Tech Interview</a></li>
+            <li><a href="#hr" class="nav-link">HR Interview</a></li>
+            <li><a href="#resume" class="nav-link">Upload Resume</a></li>
+            <li><a href="#about" class="nav-link">About</a></li>
+            <li><a href="#profile" class="nav-link">Profile</a></li>
+          </ul>
+        </nav>
+      </header>
+
+      <div id="main">
+        <!-- Home Section -->
+        <article id="home">
+          <div class="content">
+            <header>
+              <h2>Welcome to CyberVerse AI</h2>
+              <p>Prepare for your future with our advanced interview system.</p>
+            </header>
+            <div class="inner">
+              <div class="box">
+                <p>
+                  The CyberVerse AI Interview System leverages cutting-edge
+                  technology to help you prepare for both technical and HR
+                  interviews. Experience a futuristic interface with real-time
+                  feedback and audio responses.
+                </p>
+                <ul class="actions">
+                  <li>
+                    <a href="#tech" class="button nav-link"
+                      ><i class="fas fa-code"></i> Start Tech Interview</a
+                    >
+                  </li>
+                  <li>
+                    <a href="#hr" class="button nav-link"
+                      ><i class="fas fa-users"></i> Start HR Interview</a
+                    >
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <span class="close"></span>
+        </article>
+
+        <!-- Tech Interview Section -->
+        <article id="tech">
+          <div class="content">
+            <header>
+              <h2>Tech Interview</h2>
+              <p>Test your technical skills with AI-driven questions.</p>
+            </header>
+            <div class="inner">
+              <div class="box">
+                <ul class="actions stacked">
+                  <li>
+                    <button id="startInterviewTech" class="button">
+                      <i class="fas fa-play"></i> Start Tech Interview
+                    </button>
+                  </li>
+                  <li>
+                    <button id="startRecordingTech" class="button">
+                      <i class="fas fa-microphone"></i> Start Recording
+                    </button>
+                  </li>
+                  <li>
+                    <button id="stopRecordingTech" disabled class="button">
+                      <i class="fas fa-stop"></i> Stop Recording
+                    </button>
+                  </li>
+                </ul>
+                <audio id="audioPlayerTech" controls></audio>
+                <p id="questionTextTech"></p>
+                <p id="feedbackTextTech"></p>
+                <div class="video-container">
+                  <video
+                    id="videoFeedTech"
+                    width="320"
+                    height="240"
+                    autoplay
+                  ></video>
+                  <button
+                    id="startCameraTech"
+                    class="button"
+                    style="margin-top: 1rem"
+                  >
+                    <i class="fas fa-video"></i> Start Camera
+                  </button>
+                  <button
+                    id="stopCameraTech"
+                    class="button"
+                    style="margin-top: 1rem; display: none"
+                  >
+                    <i class="fas fa-video-slash"></i> Stop Camera
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <span class="close"></span>
+        </article>
+
+        <!-- HR Interview Section -->
+        <article id="hr">
+          <div class="content">
+            <header>
+              <h2>HR Interview</h2>
+              <p>Prepare for behavioral and situational questions.</p>
+            </header>
+            <div class="inner">
+              <div class="box">
+                <ul class="actions stacked">
+                  <li>
+                    <button id="startInterviewHR" class="button">
+                      <i class="fas fa-play"></i> Start HR Interview
+                    </button>
+                  </li>
+                  <li>
+                    <button id="startRecordingHR" class="button">
+                      <i class="fas fa-microphone"></i> Start Recording
+                    </button>
+                  </li>
+                  <li>
+                    <button id="stopRecordingHR" disabled class="button">
+                      <i class="fas fa-stop"></i> Stop Recording
+                    </button>
+                  </li>
+                </ul>
+                <audio id="audioPlayerHR" controls></audio>
+                <p id="questionTextHR"></p>
+                <p id="feedbackTextHR"></p>
+                <div class="video-container">
+                  <video
+                    id="videoFeedHR"
+                    width="320"
+                    height="240"
+                    autoplay
+                  ></video>
+                  <div
+                    id="emotionDisplayHR"
+                    style="
+                      margin-top: 1rem;
+                      padding: 1rem;
+                      border: 1px solid #ccc;
+                      background: #f9f9f9;
+                    "
+                  >
+                    <p>
+                      <strong>Current Emotions:</strong>
+                      <span id="emotionsHR">None detected</span>
+                    </p>
+                    <p>
+                      <strong>Dominant Emotion:</strong>
+                      <span id="dominantEmotionHR">None</span>
+                    </p>
+                  </div>
+                  <button
+                    id="startCameraHR"
+                    class="button"
+                    style="margin-top: 1rem"
+                  >
+                    <i class="fas fa-video"></i> Start Camera
+                  </button>
+                  <button
+                    id="stopCameraHR"
+                    class="button"
+                    style="margin-top: 1rem; display: none"
+                  >
+                    <i class="fas fa-video-slash"></i> Stop Camera
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <span class="close"></span>
+        </article>
+
+        <!-- Resume Upload Section -->
+        <article id="resume">
+          <div class="content">
+            <header>
+              <h2>Upload Your Resume</h2>
+              <p>
+                Extract skills from your resume to enhance your interview prep.
+              </p>
+            </header>
+            <div class="inner">
+              <div class="box">
+                <form id="resumeForm" enctype="multipart/form-data">
+                  <input
+                    type="file"
+                    id="resumeFile"
+                    name="file"
+                    accept=".pdf,.docx"
+                  />
+                  <button type="submit" class="button">
+                    <i class="fas fa-upload"></i> Upload and Parse
+                  </button>
+                </form>
+                <p id="skillsOutput"></p>
+              </div>
+            </div>
+          </div>
+          <span class="close"></span>
+        </article>
+
+        <!-- About Section -->
+        <article id="about">
+          <div class="content">
+            <header>
+              <h2>About CyberVerse AI</h2>
+              <p>Learn more about our mission and technology.</p>
+            </header>
+            <div class="inner">
+              <div class="box">
+                <p>
+                  CyberVerse AI is powered by xAI, dedicated to advancing
+                  human-AI collaboration. Our interview system uses
+                  state-of-the-art AI to simulate real-world interviews, helping
+                  candidates improve their skills with audio analysis.
+                </p>
+                <ul class="icons">
+                  <li>
+                    <a href="#" class="icon brands fa-twitter"
+                      ><span class="label">Twitter</span></a
+                    >
+                  </li>
+                  <li>
+                    <a href="#" class="icon brands fa-github"
+                      ><span class="label">GitHub</span></a
+                    >
+                  </li>
+                  <li>
+                    <a href="#" class="icon brands fa-linkedin"
+                      ><span class="label">LinkedIn</span></a
+                    >
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <span class="close"></span>
+        </article>
+
+        <!-- Profile Section -->
+        <article id="profile">
+          <div class="content">
+            <header>
+              <h2>Profile</h2>
+              <p>Your Interview Performance</p>
+            </header>
+            <div class="inner">
+              <div class="box">
+                <h3>Technical Interview</h3>
+                <p id="techProfileScore">Score: 0/10</p>
+                <button id="loadTechProfile" class="button">
+                  Load Tech Profile
+                </button>
+                <h3>HR Interview</h3>
+                <p id="hrProfileScore">Score: 0/8</p>
+                <p id="hrProfileDetails"></p>
+                <button id="loadHRProfile" class="button">
+                  Load HR Profile
+                </button>
+              </div>
+            </div>
+          </div>
+          <span class="close"></span>
+        </article>
+      </div>
+
+      <footer id="footer">
+        <p class="copyright">© 2025 CyberVerse AI.</p>
+      </footer>
+    </div>
+
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/browser.min.js"></script>
+    <script src="/static/js/breakpoints.min.js"></script>
+    <script src="/static/js/util.js"></script>
+    <script src="/static/js/dimension-functions.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+      function enterFullScreen() {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) elem.requestFullscreen();
+        else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+        else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+      }
+      function exitFullScreen() {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) document.msExitFullscreen();
+      }
+
+      function pauseInterview() {
+        stopRecording("tech");
+        stopRecording("hr");
+        stopCamera("tech");
+        stopCamera("hr");
+        document.getElementById("audioPlayerTech").pause();
+        document.getElementById("audioPlayerHR").pause();
+      }
+
+      async function signUp() {
+        const email = document.getElementById("signUpEmail").value;
+        const password = document.getElementById("signUpPassword").value;
+
+        const response = await fetch("http://localhost:5000/sign_up" , {
+          method: "POST",
+          body: new URLSearchParams({ email, password }),
+        });
+        const result = await response.json();
+        const feedback = document.getElementById("signUpFeedback");
+        if (result.success) {
+          feedback.textContent = "Sign-up successful! Please sign in.";
+          feedback.style.color = "green";
+          setTimeout(() => {
+            $("#signup").removeClass("active");
+            $("#signin").addClass("active");
+          }, 2000);
+        } else {
+          feedback.textContent = `Error: ${result.error}`;
+          feedback.style.color = "red";
+        }
+      }
+
+      async function signIn() {
+        const email = document.getElementById("signInEmail").value;
+        const password = document.getElementById("signInPassword").value;
+
+        const response = await fetch("http://localhost:5000/sign_in", {
+          method: "POST",
+          body: new URLSearchParams({ email, password }),
+        });
+        const result = await response.json();
+        const feedback = document.getElementById("signInFeedback");
+        if (result.success) {
+          feedback.textContent = "Sign-in successful! Redirecting...";
+          feedback.style.color = "green";
+          setTimeout(() => {
+            $("#wrapper").addClass("logged-in");
+            $("#home").addClass("active");
+            // Reapply preloading class briefly for animation
+            $("body").addClass("is-preload");
+            setTimeout(() => {
+              $("body").removeClass("is-preload");
+            }, 100);
+          }, 2000);
+        } else {
+          feedback.textContent = `Error: ${result.error}`;
+          feedback.style.color = "red";
+        }
+      }
+
+      $(document).ready(function () {
+        $(".nav-link").on("click", function (e) {
+          e.preventDefault();
+          const target = $(this).attr("href").substring(1);
+          $("#main article").removeClass("active");
+          $(`#${target}`).addClass("active");
+          alan;
+          $("#header nav ul li a").removeClass("active");
+          $(this).addClass("active");
+          window.scrollTo(0, 0);
+        });
+
+        $(".close").on("click", function () {
+          $("#main article").removeClass("active");
+          $("#header nav ul li a").removeClass("active");
+          window.scrollTo(0, 0);
+        });
+
+        // Initial page load animation
+        setTimeout(() => {
+          $("body").removeClass("is-preload");
+        }, 100);
+
+        $("#loadTechProfile").on("click", function () {
+          $.ajax({
+            url: "/profile",
+            method: "GET",
+            success: function (data) {
+              $("#techProfileScore").text(
+                `Score: ${data.score}/${data.max_score}`
+              );
+            },
+            error: function (err) {
+              $("#techProfileScore").text("Error loading tech profile.");
+            },
+          });
+        });
+
+        $("#loadHRProfile").on("click", function () {
+          $.ajax({
+            url: "/hr_profile",
+            method: "GET",
+            success: function (data) {
+              if (data.error) {
+                $("#hrProfileScore").text("Error loading HR profile.");
+                $("#hrProfileDetails").text("");
+              } else {
+                $("#hrProfileScore").text(
+                  `Score: ${data.score}/${data.max_score}`
+                );
+                let details = `${data.emotions}<br>`;
+                details += `${data.confidence}<br>`;
+                details += `${data.enthusiasm}<br>`;
+                details += `${data.positivity}<br>`;
+                details += `Feedback:<ul>`;
+                data.feedback.forEach((f) => (details += `<li>${f}</li>`));
+                details += `</ul>`;
+                details += `${data.overall_summary}`;
+                $("#hrProfileDetails").html(details);
+              }
+            },
+            error: function (err) {
+              $("#hrProfileScore").text("Error loading HR profile.");
+              $("#hrProfileDetails").text("");
+            },
+          });
+        });
+      });
+
+      let mediaRecorderTech = null,
+        mediaRecorderHR = null;
+      let audioChunksTech = [],
+        audioChunksHR = [];
+      let streamTech = null,
+        streamHR = null;
+      let isRecordingTech = false,
+        isRecordingHR = false;
+      let videoStreamTech = null,
+        videoStreamHR = null;
+
+      document
+        .getElementById("startInterviewTech")
+        .addEventListener("click", () => {
+          enterFullScreen();
+          startInterview("tech");
+        });
+      document
+        .getElementById("startRecordingTech")
+        .addEventListener("click", () => startRecording("tech"));
+      document
+        .getElementById("stopRecordingTech")
+        .addEventListener("click", () => stopRecording("tech"));
+      document
+        .getElementById("startCameraTech")
+        .addEventListener("click", () => startCamera("tech"));
+      document
+        .getElementById("stopCameraTech")
+        .addEventListener("click", () => stopCamera("tech"));
+
+      document
+        .getElementById("startInterviewHR")
+        .addEventListener("click", () => {
+          enterFullScreen();
+          startInterview("hr");
+        });
+      document
+        .getElementById("startRecordingHR")
+        .addEventListener("click", () => startRecording("hr"));
+      document
+        .getElementById("stopRecordingHR")
+        .addEventListener("click", () => stopRecording("hr"));
+      document
+        .getElementById("startCameraHR")
+        .addEventListener("click", () => startCamera("hr"));
+      document
+        .getElementById("stopCameraHR")
+        .addEventListener("click", () => stopCamera("hr"));
+
+      async function startInterview(type) {
+        const suffix = type === "tech" ? "Tech" : "HR";
+        try {
+          const response = await fetch(
+            "http://localhost:5000/start_interview",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ type: type }),
+            }
+          );
+          const data = await response.json();
+          if (data.error) {
+            document.getElementById(
+              `feedbackText${suffix}`
+            ).textContent = `Error: ${data.error}`;
+          } else {
+            document.getElementById(`questionText${suffix}`).textContent =
+              data.question;
+            if (data.audio) {
+              document.getElementById(
+                `audioPlayer${suffix}`
+              ).src = `/static/${data.audio}`;
+              document.getElementById(`audioPlayer${suffix}`).play();
+            }
+            document.getElementById(`feedbackText${suffix}`).textContent = "";
+          }
+        } catch (error) {
+          document.getElementById(`feedbackText${suffix}`).textContent =
+            "Error starting interview.";
+        }
+      }
+
+      async function startRecording(type) {
+        const suffix = type === "tech" ? "Tech" : "HR";
+        let mediaRecorder, audioChunks, stream;
+        if (type === "tech") {
+          if (isRecordingTech) return;
+          isRecordingTech = true;
+          audioChunks = audioChunksTech;
+        } else {
+          if (isRecordingHR) return;
+          isRecordingHR = true;
+          audioChunks = audioChunksHR;
+        }
+        document.getElementById(`startRecording${suffix}`).disabled = true;
+        document.getElementById(`stopRecording${suffix}`).disabled = false;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          if (type === "tech") {
+            mediaRecorderTech = mediaRecorder;
+            streamTech = stream;
+          } else {
+            mediaRecorderHR = mediaRecorder;
+            streamHR = stream;
+          }
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) audioChunks.push(event.data);
+          };
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+            audioChunks.length = 0;
+            const formData = new FormData();
+            formData.append("audio", audioBlob, "response.webm");
+            formData.append("type", type);
+            const videoFeed = document.getElementById(`videoFeed${suffix}`);
+            if (videoFeed.srcObject) {
+              const canvas = document.createElement("canvas");
+              canvas.width = videoFeed.videoWidth;
+              canvas.height = videoFeed.videoHeight;
+              const context = canvas.getContext("2d");
+              context.drawImage(videoFeed, 0, 0, canvas.width, canvas.height);
+              const imageData = canvas.toDataURL("image/jpeg").split(",")[1];
+              formData.append("image_data", imageData);
+            }
+            try {
+              const response = await fetch(
+                "http://localhost:5000/submit_response",
+                {
+                  method: "POST",
+                  body: formData,
+                }
+              );
+              const data = await response.json();
+              if (data.error) {
+                document.getElementById(
+                  `feedbackText${suffix}`
+                ).textContent = `Error: ${data.error}`;
+              } else {
+                document.getElementById(`questionText${suffix}`).textContent =
+                  data.question;
+                if (data.audio) {
+                  document.getElementById(
+                    `audioPlayer${suffix}`
+                  ).src = `/static/${data.audio}`;
+                  document.getElementById(`audioPlayer${suffix}`).play();
+                }
+                document.getElementById(`feedbackText${suffix}`).textContent =
+                  data.feedback || "";
+                if (type === "hr" && data.emotions) {
+                  const emotionsStr = Object.entries(data.emotions)
+                    .map(
+                      ([emotion, value]) => `${emotion}: ${value.toFixed(2)}`
+                    )
+                    .join(", ");
+                  document.getElementById("emotionsHR").textContent =
+                    emotionsStr || "None detected";
+                  document.getElementById("dominantEmotionHR").textContent =
+                    data.dominant_emotion || "None";
+                }
+              }
+            } catch (error) {
+              document.getElementById(`feedbackText${suffix}`).textContent =
+                "Error submitting response.";
+            }
+            if (type === "tech") isRecordingTech = false;
+            else isRecordingHR = false;
+            document.getElementById(`startRecording${suffix}`).disabled = false;
+            document.getElementById(`stopRecording${suffix}`).disabled = true;
+          };
+          mediaRecorder.start();
+        } catch (error) {
+          alert("Could not access microphone. Please allow permissions.");
+          if (type === "tech") isRecordingTech = false;
+          else isRecordingHR = false;
+          document.getElementById(`startRecording${suffix}`).disabled = false;
+          document.getElementById(`stopRecording${suffix}`).disabled = true;
+        }
+      }
+
+      function stopRecording(type) {
+        const suffix = type === "tech" ? "Tech" : "HR";
+        let mediaRecorder, stream;
+        if (type === "tech") {
+          if (!isRecordingTech) return;
+          mediaRecorder = mediaRecorderTech;
+          stream = streamTech;
+          isRecordingTech = false;
+        } else {
+          if (!isRecordingHR) return;
+          mediaRecorder = mediaRecorderHR;
+          stream = streamHR;
+          isRecordingHR = false;
+        }
+        if (mediaRecorder && mediaRecorder.state !== "inactive")
+          mediaRecorder.stop();
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+          stream = null;
+        }
+        if (type === "tech") {
+          mediaRecorderTech = null;
+          streamTech = null;
+        } else {
+          mediaRecorderHR = null;
+          streamHR = null;
+        }
+      }
+
+      async function startCamera(type) {
+        const suffix = type === "tech" ? "Tech" : "HR";
+        const videoFeed = document.getElementById(`videoFeed${suffix}`);
+        const startButton = document.getElementById(`startCamera${suffix}`);
+        const stopButton = document.getElementById(`stopCamera${suffix}`);
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+          videoFeed.srcObject = stream;
+          if (type === "tech") videoStreamTech = stream;
+          else videoStreamHR = stream;
+          videoFeed.style.display = "block";
+          startButton.style.display = "none";
+          stopButton.style.display = "inline-block";
+        } catch (error) {
+          alert("Could not access camera. Please allow permissions.");
+        }
+      }
+
+      function stopCamera(type) {
+        const suffix = type === "tech" ? "Tech" : "HR";
+        const videoFeed = document.getElementById(`videoFeed${suffix}`);
+        const startButton = document.getElementById(`startCamera${suffix}`);
+        const stopButton = document.getElementById(`stopCamera${suffix}`);
+        let videoStream = type === "tech" ? videoStreamTech : videoStreamHR;
+        if (videoFeed.srcObject) {
+          videoFeed.srcObject.getTracks().forEach((track) => track.stop());
+          videoFeed.srcObject = null;
+          videoFeed.style.display = "none";
+          startButton.style.display = "inline-block";
+          stopButton.style.display = "none";
+          if (type === "tech") videoStreamTech = null;
+          else videoStreamHR = null;
+        }
+      }
+
+      document
+        .getElementById("resumeForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const formData = new FormData();
+          const fileInput = document.getElementById("resumeFile");
+          if (!fileInput.files.length) {
+            document.getElementById("skillsOutput").textContent =
+              "Please select a file.";
+            return;
+          }
+          formData.append("file", fileInput.files[0]);
+          try {
+            const response = await fetch(
+              "http://localhost:5000/upload_resume",
+              {
+                method: "POST",
+                body: formData,
+              }
+            );
+            const data = await response.json();
+            if (data.error) {
+              document.getElementById(
+                "skillsOutput"
+              ).textContent = `Error: ${data.error}`;
+            } else {
+              document.getElementById(
+                "skillsOutput"
+              ).textContent = `Skills: ${data.skills.join(", ")}`;
+            }
+          } catch (error) {
+            document.getElementById("skillsOutput").textContent =
+              "Error uploading resume.";
+          }
+        });
+
+      $(".nav-link, .close").on("click", function () {
+        stopRecording("tech");
+        stopRecording("hr");
+        stopCamera("tech");
+        stopCamera("hr");
+        document.getElementById("questionTextTech").textContent = "";
+        document.getElementById("questionTextHR").textContent = "";
+        document.getElementById("feedbackTextTech").textContent = "";
+        document.getElementById("feedbackTextHR").textContent = "";
+        document.getElementById("audioPlayerTech").src = "";
+        document.getElementById("audioPlayerHR").src = "";
+      });
+    </script>
+    <script>
+      (function () {
+        function c() {
+          var b = a.contentDocument || a.contentWindow.document;
+          if (b) {
+            var d = b.createElement("script");
+            d.innerHTML =
+              "window.__CF$cv$params={r:'92ab5b16de58da0b',t:'MTc0MzcxMjU2MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
+            b.getElementsByTagName("head")[0].appendChild(d);
+          }
+        }
+        if (document.body) {
+          var a = document.createElement("iframe");
+          a.height = 1;
+          a.width = 1;
+          a.style.position = "absolute";
+          a.style.top = 0;
+          a.style.left = 0;
+          a.style.border = "none";
+          a.style.visibility = "hidden";
+          document.body.appendChild(a);
+          if ("loading" !== document.readyState) c();
+          else if (window.addEventListener)
+            document.addEventListener("DOMContentLoaded", c);
+          else {
+            var e = document.onreadystatechange || function () {};
+            document.onreadystatechange = function (b) {
+              e(b);
+              "loading" !== document.readyState &&
+                ((document.onreadystatechange = e), c());
+            };
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>
