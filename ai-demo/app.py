@@ -19,27 +19,24 @@ from elevenlabs.client import ElevenLabs
 from supabase import create_client, Client
 from datetime import datetime
 import json
+from dotenv import load_dotenv
+import os
 
-# Hardcoded Supabase credentials
-SUPABASE_URL = "https://eynzozsmskusunwmyxjo.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5bnpvenNtc2t1c3Vud215eGpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2ODc3MDUsImV4cCI6MjA1OTI2MzcwNX0.8szPS5fXjdVLyM9Z5raKPlFqVBFSuNsMO6zG0GwtrYk"
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABSE_KEY")
 
-# Initialize Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 
-# Configure APIs
-GOOGLE_API_KEY = "AIzaSyAU3lqb-xlubVzrTyDslPaxX_tmUD1i_eo"
+GOOGLE_API_KEY = os.getenv("GOOGLE_KEY")
 genai.configure(api_key=GOOGLE_API_KEY)
-ELEVENLABS_API_KEY = "()sk_ca92f6843b635d499e0cc88faeb59178871e0b55babeba7c"
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_KEY")
 client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 
-# Model selection
 def get_available_model():
     try:
         models = genai.list_models()
@@ -57,22 +54,18 @@ def get_available_model():
 
 model = get_available_model()
 
-# Initialize analyzers
 analyzer = SentimentIntensityAnalyzer()
 nlp = spacy.load("en_core_web_sm")
 
-# Global variables
 conversation_history = []
 current_interview_type = None
 extracted_skills = []
 current_user_id = None
 
-# Tech interview variables
 tech_question_count = 0
 tech_score = 0
 MAX_TECH_QUESTIONS = 10
 
-# HR interview variables
 hr_question_count = 0
 hr_score = 0
 MAX_HR_QUESTIONS = 8
@@ -92,7 +85,6 @@ hr_questions = [
 
 hr_question_index = 0
 
-# Evaluate HR response using Gemini
 def gemini_mark_hr_answer(answer_text):
     try:
         prompt = (f"Mark the following HR interview answer on a scale from 0.0 to 1.0 for be liberal in marking dont be very strict give them enough marks  "
@@ -104,7 +96,6 @@ def gemini_mark_hr_answer(answer_text):
         logger.error(f"Error in marking HR answer: {e}")
         return 0.5
 
-# Evaluate tech response using Gemini
 def gemini_mark_answer(answer_text):
     try:
         prompt = (f"Mark the following technical answer on a scale from 0.0 to 1.0 for give marks in a liberal fashion dont be very strict in giving marks give them enough marks"
@@ -116,7 +107,6 @@ def gemini_mark_answer(answer_text):
         logger.error(f"Error in marking answer with Gemini: {e}")
         return 0.5
 
-# Emotion detection
 def detect_emotion(frame):
     try:
         result = DeepFace.analyze(frame, actions=['emotion'], enforce_detection=False)
@@ -132,7 +122,6 @@ def detect_emotion(frame):
         logger.error(f"Error in emotion detection: {e}")
         return {}, None
 
-# Capture frame
 def capture_frame(image_data):
     try:
         if "," in image_data:
@@ -152,7 +141,6 @@ def capture_frame(image_data):
         logger.error(f"Error capturing frame: {e}")
         return None
 
-# Generate technical question
 def generate_tech_question(response=None):
     global extracted_skills, conversation_history, tech_question_count
     if not model:
@@ -183,7 +171,6 @@ def generate_tech_question(response=None):
         logger.error(f"Error with Gemini API: {e}")
         return "What is the difference between a list and a tuple in Python?"
 
-# Generate HR question using Gemini
 def generate_hr_question():
     global hr_question_index, hr_questions, conversation_history
     context = "\n".join([f"{entry['role']}: {entry['text']}" for entry in conversation_history])
@@ -204,7 +191,7 @@ def generate_hr_question():
         hr_question_index = (hr_question_index + 1) % len(hr_questions)
         return question
 
-# Text-to-speech
+
 def text_to_speech(text, filename="question.mp3"):
     try:
         audio = client.generate(
@@ -224,7 +211,6 @@ def text_to_speech(text, filename="question.mp3"):
         logger.error(f"Error in text-to-speech: {e}")
         return None
 
-# Speech analysis
 def analyze_speech(audio_file):
     try:
         y, sr = librosa.load(audio_file)
@@ -236,7 +222,6 @@ def analyze_speech(audio_file):
         logger.error(f"Error in speech analysis: {e}")
         return 0, 0
 
-# Soft skills analysis
 def analyze_soft_skills(text, pitch, energy, emotions=None):
     try:
         sentiment = analyzer.polarity_scores(text)
@@ -255,7 +240,6 @@ def analyze_soft_skills(text, pitch, energy, emotions=None):
         logger.error(f"Error in soft skills analysis: {e}")
         return {"confidence": "Unknown", "enthusiasm": "Unknown", "positivity": 0.0, "emotion_feedback": "Unknown", "emotions": {}}
 
-# Convert audio
 def convert_to_wav(input_file, output_file="response.wav"):
     try:
         audio = AudioSegment.from_file(input_file)
@@ -266,7 +250,6 @@ def convert_to_wav(input_file, output_file="response.wav"):
         logger.error(f"Error converting audio: {e}")
         return None
 
-# Extract text from resume
 def extract_text(file):
     try:
         text = ""
@@ -288,7 +271,6 @@ def extract_text(file):
         logger.error(f"Error extracting text: {e}")
         return ""
 
-# Extract skills from text
 def extract_skills(text):
     global extracted_skills
     try:
@@ -373,8 +355,8 @@ def sign_up_route():
             "tech_max_score": 10,
             "hr_score": 0.0,
             "hr_max_score": 8,
-            "hr_emotions": [],  # Initialize as empty list, not string
-            "hr_soft_skills": [],  # Initialize as empty list, not string
+            "hr_emotions": [],  
+            "hr_soft_skills": [],  
             "last_updated": datetime.utcnow().isoformat()
         }
         profile_response = supabase.table("profiles").insert(profile_data).execute()
@@ -517,7 +499,7 @@ def submit_response():
                 audio_file = text_to_speech(next_question)
                 conversation_history.append({"role": "interviewer", "text": next_question})
                 response = {"question": next_question, "audio": audio_file or None}
-        else:  # HR interview
+        else: 
             mark = gemini_mark_hr_answer(response_text)
             hr_score += mark
             hr_question_count += 1
@@ -529,8 +511,8 @@ def submit_response():
                 conversation_history.append({"role": "interviewer", "text": final_message})
                 update_data = {
                     "hr_score": float(hr_score),
-                    "hr_emotions": hr_emotions_history,  # Store as list of dicts
-                    "hr_soft_skills": hr_soft_skills_history,  # Store as list of dicts
+                    "hr_emotions": hr_emotions_history, 
+                    "hr_soft_skills": hr_soft_skills_history, 
                     "last_updated": datetime.utcnow().isoformat()
                 }
                 logger.info(f"Attempting to update HR profile for user_id: {current_user_id}")
@@ -598,7 +580,7 @@ def profile():
         profile = profile_data.data[0]
         logger.info(f"Fetched tech profile for user_id {current_user_id}: tech_score={profile['tech_score']}")
         return jsonify({
-            "score": float(profile["tech_score"]),  # Changed from tech_score to score
+            "score": float(profile["tech_score"]), 
             "max_score": profile["tech_max_score"]
         })
     except Exception as e:
@@ -618,7 +600,6 @@ def hr_profile():
         profile = profile_data.data[0]
         hr_score = float(profile["hr_score"])
         MAX_HR_QUESTIONS = profile["hr_max_score"]
-        # Handle case where hr_emotions might be a string from previous runs
         hr_emotions_history = profile["hr_emotions"]
         if isinstance(hr_emotions_history, str):
             hr_emotions_history = json.loads(hr_emotions_history) if hr_emotions_history else []
@@ -627,10 +608,10 @@ def hr_profile():
             hr_soft_skills_history = json.loads(hr_soft_skills_history) if hr_soft_skills_history else []
 
         avg_emotions_description = ""
-        avg_emotions = {}  # Initialize avg_emotions here
+        avg_emotions = {}  
         if hr_emotions_history:
             for emotion_dict in hr_emotions_history:
-                if emotion_dict:  # Ensure dict is not empty
+                if emotion_dict:  
                     for emotion, value in emotion_dict.items():
                         avg_emotions[emotion] = avg_emotions.get(emotion, 0) + value
             if avg_emotions:
